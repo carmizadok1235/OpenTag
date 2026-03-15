@@ -7,6 +7,7 @@
 #include <uECC.h>
 #include <crypto.h>
 #include <MasterBeaconKey.h>
+#include <AppleBLEPacket.h>
 
 #define BLE_PACKET_SIZE 37 
 
@@ -67,43 +68,10 @@ void print_key(uint8_t* key, int size){
 //   '\x00' // Hint (0x00 on iOS Reports)
 // };
 
-void build_packet_data(char* packet){
-  // BLE MAC Address (p[0] | 0b11 << 6 || p[1..5] where p is public key)
-  for (int i = 0; i < 6; i++){
-    packet[i] = '\x00';
-  }
-
-  packet[6] = '\x1e'; // Payload Length in Bytes (30)
-  packet[7] = '\xff'; // Advertisment Type
-  // Company ID (Apple)
-  packet[8] = '\x00';
-  packet[9] = '\x4c'; 
-  packet[10] = '\x12'; // OF Type
-  packet[11] = '\x19'; // OF Data Length in Bytes (25)
-  packet[12] = '\x00'; // Status (Battery Level)
-  
-  // Public Key Bytes p[6..27]
-  for (int i = 13; i < 13+22; i++){
-    packet[i] = '\x00';
-  }
-  
-  packet[35] = '\x00'; // Public Key Bits p[0] >> 6
-  packet[36] = '\x00'; // Hint (0x00 on iOS Reports)
-}
-
 void setup() {
   Serial.begin(115200);
   delay(5000);
-  // randomSeed(analogRead(A0));
-  // Serial.print("[>] Testing ECC\n");
   dbg_print("Testing ECC");
-  // Serial.print("[>] G Generator: ", curve->G)
-  // Serial.print("[>] Initializing public and private keys\n");
-  // uECC_set_rng(&RNG);
-  // dbg_print("Initializing public and private keys");
-  // init_ECC_keys();
-  // dbg_print("Initializing symmetric key");
-  // init_symmetric_key();
   dbg_print("Initializing MasterBeaconKey");
   MasterBeaconKey* masterBeaconKey = new MasterBeaconKey(&RNG);
 
@@ -127,14 +95,20 @@ void setup() {
 
   BLEDevice::init("");
   dbg_print("BLEDevice initialized.");
+
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
   dbg_print("BLEAdvertising initialized.");
-  char* packet_data = (char*)malloc(sizeof(char)*37);
-  dbg_print("packet_data memory allocated.");
-  build_packet_data(packet_data);
+
+  // char* packet_data = (char*)malloc(sizeof(char)*37);
+  AppleBLEPacket* appleBLEPacket = new AppleBLEPacket();
+  dbg_print("initialized AppleBLEPacket.");
+
+  // build_packet_data(packet_data, masterBeaconKey->ecc_public_k);
+  appleBLEPacket->set_public_key(masterBeaconKey->ecc_public_k);
   dbg_print("packet_data built.");
+
   BLEAdvertisementData* advData = (BLEAdvertisementData*)malloc(sizeof(BLEAdvertisementData));
-  advData->addData(packet_data);
+  advData->addData(appleBLEPacket->packet_data);
   dbg_print("Data added to advData.");
 
   

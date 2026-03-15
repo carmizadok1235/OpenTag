@@ -11,7 +11,7 @@
 #define ECC_PUBLIC_KEY_LEN 28*2
 #define SYMMETRIC_KEY_LEN 32
 
-class MasterBeaconKey{
+class MasterBeaconKey {
   public:
     uint8_t ecc_private_k[ECC_PRIVATE_KEY_LEN];
 
