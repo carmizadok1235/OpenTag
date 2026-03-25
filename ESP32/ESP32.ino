@@ -11,7 +11,6 @@
 
 #define BLE_PACKET_SIZE 37 
 
-// char* packet_data = (char*)malloc(sizeof(char)*37);
 
 static int RNG(uint8_t *dest, unsigned size) {
   // Use the least-significant bits from the ADC for an unconnected pin (or connected to a source of 
@@ -54,20 +53,6 @@ void print_key(uint8_t* key, int size){
   Serial.println();
 }
 
-// *packet_data = {
-//   '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', // BLE MAC Address (p[0] | 0b11 << 6 || p[1..5] where p is public key)
-//   '\x1e', //Payload Length in Bytes (30)
-//   '\xff', // Advertisment Type
-//   '\x00', '\x4c', // Company ID (Apple)
-//   '\x12', // OF Type
-//   '\x19', // OF Data Length in Bytes (25)
-//   '\x00', // Status (Battery Level)
-//   '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', // Public Key Bytes p[6..27]
-//   '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-//   '\x00', // Public Key Bits p[0] >> 6
-//   '\x00' // Hint (0x00 on iOS Reports)
-// };
-
 void setup() {
   Serial.begin(115200);
   delay(5000);
@@ -86,7 +71,11 @@ void setup() {
   Serial.print("public key:\n");
   print_key(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN);
 
-  masterBeaconKey->init_symmetric_key();
+  if (!(masterBeaconKey->init_symmetric_key())){
+    dbg_print("Failed to Generate Symmetric Key.");
+    exit(1)
+  }
+
   Serial.print("Symmetric key:\n");
   print_key(masterBeaconKey->symmetric_k, SYMMETRIC_KEY_LEN);
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
@@ -104,10 +93,11 @@ void setup() {
   dbg_print("initialized AppleBLEPacket.");
 
   // build_packet_data(packet_data, masterBeaconKey->ecc_public_k);
-  appleBLEPacket->set_public_key(masterBeaconKey->ecc_public_k);
+  appleBLEPacket->set_public_key(masterBeaconKey->public_rolling_key // still not implemented, // len);
   dbg_print("packet_data built.");
 
-  BLEAdvertisementData* advData = (BLEAdvertisementData*)malloc(sizeof(BLEAdvertisementData));
+  // BLEAdvertisementData* advData = (BLEAdvertisementData*)malloc(sizeof(BLEAdvertisementData));
+  BLEAdvertisementData* advData = new BLEAdvertisementData();
   advData->addData(appleBLEPacket->packet_data);
   dbg_print("Data added to advData.");
 
