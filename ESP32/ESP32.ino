@@ -73,7 +73,7 @@ void setup() {
 
   if (!(masterBeaconKey->init_symmetric_key())){
     dbg_print("Failed to Generate Symmetric Key.");
-    exit(1)
+    exit(1);
   }
 
   Serial.print("Symmetric key:\n");
@@ -93,7 +93,7 @@ void setup() {
   dbg_print("initialized AppleBLEPacket.");
 
   // build_packet_data(packet_data, masterBeaconKey->ecc_public_k);
-  appleBLEPacket->set_public_key(masterBeaconKey->public_rolling_key // still not implemented, // len);
+  appleBLEPacket->set_public_key(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN/2); // taking only the X-coordinate of the public key
   dbg_print("packet_data built.");
 
   // BLEAdvertisementData* advData = (BLEAdvertisementData*)malloc(sizeof(BLEAdvertisementData));
@@ -101,6 +101,15 @@ void setup() {
   advData->addData(appleBLEPacket->packet_data);
   dbg_print("Data added to advData.");
 
+  Serial.print("---------------------------------------------------------------------------------------------------------\n");
+  dbg_print("final BLE packet:");
+  char* buf = appleBLEPacket->packet_repr();
+  for (int i = 0; i < APPLE_BLE_PACKET_LENGTH*2; i++){
+    Serial.printf("%c", buf[i]);
+    if ((i+1)%2 == 0)
+      Serial.print(" ");
+  }
+  Serial.println();
   
   pAdvertising->setAdvertisementData(*advData);
   pAdvertising->start();

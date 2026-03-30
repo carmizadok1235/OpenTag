@@ -48,7 +48,7 @@ void AppleBLEPacket::build_packet_structure(){
   this->packet_data[PAYLOAD_LENGTH_PACKET_INDEX] = PAYLOAD_LENGTH_VAL; // Payload Length in Bytes (30)
   this->packet_data[ADVERTISEMENT_TYPE_PACKET_INDEX] = ADVERTISEMENT_TYPE_VAL; // Advertisement Type
   // Company ID (Apple)
-  memcpy(this->packet_data+COMPANY_ID_PACKET_STARTING_INDEX, (uint_t*)(COMPANY_ID_VAL), COMPANY_ID_LENGTH)
+  memcpy(this->packet_data+COMPANY_ID_PACKET_STARTING_INDEX, (uint8_t*)(COMPANY_ID_VAL), COMPANY_ID_LENGTH);
   // this->packet_data[8] = '\x00';
   // this->packet_data[9] = '\x4c'; 
   this->packet_data[OF_TYPE_PACKET_INDEX] = OF_TYPE_VAL; // OF Type
@@ -62,4 +62,18 @@ void AppleBLEPacket::build_packet_structure(){
   
   // this->packet_data[35] = '\x00'; // Public Key Bits p[0] >> 6
   this->packet_data[HINT_PACKET_INDEX] = HINT_VAL; // Hint (0x00 on iOS Reports)
+}
+
+char* AppleBLEPacket::packet_repr(){
+  char* buffer = (char*)malloc((APPLE_BLE_PACKET_LENGTH*2+1)*sizeof(char));
+  char tmp[3];
+  for (int i = 0; i < APPLE_BLE_PACKET_LENGTH; i++){
+    sprintf(tmp, "%02X", this->packet_data[i]);
+    memcpy(buffer+i*2, tmp, 2);
+    // snprintf(buffer+i*3, 3, "%02X ", this->packet_data[i]);
+  }
+
+  buffer[APPLE_BLE_PACKET_LENGTH*2] = 0;
+  // Serial.printf("%s\n", buffer);
+  return buffer;
 }

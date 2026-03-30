@@ -10,7 +10,7 @@ MasterBeaconKey::MasterBeaconKey(uECC_RNG_Function rng_function){
 }
 
 bool MasterBeaconKey::init_ECC_keys(){
-  return uECC_make_key(ecc_public_k, ecc_private_k, curve)
+  return uECC_make_key(ecc_public_k, ecc_private_k, curve);
 }
 
 bool MasterBeaconKey::init_symmetric_key(){
@@ -24,6 +24,6 @@ bool MasterBeaconKey::init_symmetric_key(){
 
   } catch (int errorCode){
     Serial.printf("Error code: %d", errorCode);
-    return False
+    return false;
   }
 }
