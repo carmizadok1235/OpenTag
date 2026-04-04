@@ -15,8 +15,8 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
       // Serial.println("                                                                          <|----------------------------- CHECK THIS ONE -----------------------------");
       Serial.println("----------------------------------------------------------------");
       Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
-      Serial.printf("Raw Payload ___"
-                    "               |"
+      Serial.printf("Raw Payload ___\n"
+                    "               |\n"
                     "               v\n");
       for (int i = 0; i < payload_length; i++){
         Serial.printf("%02x ", payload[i]);
