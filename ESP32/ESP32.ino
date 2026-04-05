@@ -53,56 +53,60 @@ void print_key(uint8_t* key, int size){
   Serial.println();
 }
 
-void setup() {
-  Serial.begin(115200);
-  delay(5000);
-  dbg_print("Testing ECC");
-  dbg_print("Initializing MasterBeaconKey");
-  MasterBeaconKey* masterBeaconKey = new MasterBeaconKey(&RNG);
+MasterBeaconKey* initBeaconObject(uECC_RNG_Function rng_function){
+  MasterBeaconKey* mbk = new MasterBeaconKey(&RNG);
 
-
-  if (!(masterBeaconKey->init_ECC_keys())){
+  if (!(mbk->init_ECC_keys())){
     dbg_print("Failed to Generate Elliptic Curve Key Pair.");
     exit(1);
   }
   Serial.print("private key:\n");
-  print_key(masterBeaconKey->ecc_private_k, ECC_PRIVATE_KEY_LEN);
+  print_key(mbk->ecc_private_k, ECC_PRIVATE_KEY_LEN);
 
   Serial.print("public key:\n");
-  print_key(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN);
+  print_key(mbk->ecc_public_k, ECC_PUBLIC_KEY_LEN);
 
-  if (!(masterBeaconKey->init_symmetric_key())){
+  if (!(mbk->init_symmetric_key())){
     dbg_print("Failed to Generate Symmetric Key.");
     exit(1);
   }
 
   Serial.print("Symmetric key:\n");
-  print_key(masterBeaconKey->symmetric_k, SYMMETRIC_KEY_LEN);
+  print_key(mbk->symmetric_k, SYMMETRIC_KEY_LEN);
+
+  return mbk;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(5000);
+  dbg_print("Testing ECC");
+  
+  dbg_print("Initializing MasterBeaconKey");
+  MasterBeaconKey* masterBeaconKey = initBeaconObject(&RNG);
+
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
-
-  dbg_print("Initializing BLE Adverisment.");
-
   BLEDevice::init("");
   dbg_print("BLEDevice initialized.");
 
+  dbg_print("Initializing BLE Adverisment.");
+
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-  dbg_print("BLEAdvertising initialized.");
-
-  // char* packet_data = (char*)malloc(sizeof(char)*37);
+  
   AppleBLEPacket* appleBLEPacket = new AppleBLEPacket();
-  dbg_print("initialized AppleBLEPacket.");
+  if (!appleBLEPacket->set_public_key(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
+    dbg_print("Failed to set mac address.");
+  }
 
-  // build_packet_data(packet_data, masterBeaconKey->ecc_public_k);
-  appleBLEPacket->set_public_key(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN/2); // taking only the X-coordinate of the public key
-  dbg_print("packet_data built.");
-
-  // BLEAdvertisementData* advData = (BLEAdvertisementData*)malloc(sizeof(BLEAdvertisementData));
   BLEAdvertisementData* advData = new BLEAdvertisementData();
-  advData->addData(appleBLEPacket->packet_data);
+  advData->addData((char*)(appleBLEPacket->packet_data));
   dbg_print("Data added to advData.");
 
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
-  dbg_print("final BLE packet:");
+  dbg_print("final BLE packet:\n");
+  uint8_t* macAddress = appleBLEPacket->macAddress;
+  Serial.printf("Mac Address: %02x %02x %02x %02x %02x %02x\n", macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
+
   char* buf = appleBLEPacket->packet_repr();
   for (int i = 0; i < APPLE_BLE_PACKET_LENGTH*2; i++){
     Serial.printf("%c", buf[i]);

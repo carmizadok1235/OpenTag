@@ -1,12 +1,15 @@
 #include <AppleBLEPacket.h>
 
+
 AppleBLEPacket::AppleBLEPacket(){
-  this->packet_data = (char*)malloc(sizeof(char)*APPLE_BLE_PACKET_LENGTH);
+  this->packet_data = (uint8_t*)malloc(sizeof(uint8_t)*APPLE_BLE_PACKET_LENGTH);
+  this->macAddress = (uint8_t*)malloc(sizeof(uint8_t)*MAC_ADDRESS_SIZE);
   this->build_packet_structure();
 }
 
 AppleBLEPacket::~AppleBLEPacket(){
   free(this->packet_data);
+  free(this->macAddress);
 }
 
 bool AppleBLEPacket::set_public_key(uint8_t *key, int len){
@@ -15,16 +18,21 @@ bool AppleBLEPacket::set_public_key(uint8_t *key, int len){
   }
 
   // BLE MAC Address (p[0] | 0b11 << 6 || p[1..5] where p is public key)
-  for (int i = FIRST_6_BYTES_KEY_START_INDEX; i < FIRST_6_BYTES_KEY_END_PACKET_INDEX; i++){
+  for (int i = 0; i < MAC_ADDRESS_SIZE; i++){
     if (i == 0){ // first byte
-      this->packet_data[i] = key[i] | (0b11 << 6);
+      this->macAddress[i] = key[i] | (0b11 << 6);
       continue;
     }
-    this->packet_data[i] = key[i];
+    this->macAddress[i] = key[i];
+  }
+
+  esp_err_t ret = esp_ble_gap_set_rand_addr(macAddress);
+  if (ret != ESP_OK){
+    return false;
   }
 
   // Public Key Bytes p[6..27]
-  for (int i = REMAINING_22_BYTES_KEY_START_PACKET_INDEX; i < REMAINING_22_BYTES_KEY_END_PACKET_INDEX; i++){
+  for (int i = REMAINING_22_BYTES_KEY_START_PACKET_INDEX; i < REMAINING_22_BYTES_KEY_END_PACKET_INDEX+1; i++){
     this->packet_data[i] = key[i-KEY_OFFSET];
   }
 
@@ -35,7 +43,8 @@ bool AppleBLEPacket::set_public_key(uint8_t *key, int len){
 }
 
 void AppleBLEPacket::build_packet_structure(){
-  memset(this->packet_data, '\x00', APPLE_BLE_PACKET_LENGTH); // cleaning the buffer
+  memset(this->packet_data, 0, APPLE_BLE_PACKET_LENGTH); // cleaning the buffer
+  memset(this->macAddress, 0, MAC_ADDRESS_SIZE);
   // BLE MAC Address (p[0] | 0b11 << 6 || p[1..5] where p is public key)
   // for (int i = 0; i < 6; i++){
     // if (i == 0){
