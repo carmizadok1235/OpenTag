@@ -117,7 +117,7 @@ bool setPublicKey(uint8_t *key, int len){
   // BLE MAC Address (p[0] | 0b11 << 6 || p[1..5] where p is public key)
   for (int i = 0; i < MAC_ADDRESS_SIZE; i++){
     if (MAC_ADDRESS_SIZE-i == MAC_ADDRESS_SIZE){ // first byte
-      macAddress[MAC_ADDRESS_SIZE-i-1] = key[i] | (0b11 << 6);
+      macAddress[MAC_ADDRESS_SIZE-i-1] = key[i] | (0b11 << 6); // for some reason NimBLEDevice::setOwnAddr() setting the address in the opposite way
     }
     else{
       macAddress[MAC_ADDRESS_SIZE-i-1] = key[i];
