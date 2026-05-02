@@ -5,7 +5,8 @@ import plistlib as plist
 import pprint
 import hashlib, pbkdf2
 from dataclasses import dataclass, fields, field
-from enum import StrEnum, Enum, auto
+from abc import ABC
+from enum import StrEnum
 from Crypto.Hash import SHA256
 import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -19,17 +20,12 @@ urllib3.disable_warnings()
 srp.rfc5054_enable()
 srp.no_username_in_x()
 
-
+USER_ID = uuid.uuid4()
 
 APPLE_URL = r"https://gsa.apple.com/grandslam/GsService2"
 ANISETTE_SERVER = r"http://127.0.0.1:6969"
 APPLE_2FA_URL = r"https://gsa.apple.com/auth/verify/phone/"
-
-
-
-USER_ID = uuid.uuid4()
-DEVICE_ID = uuid.uuid4()
-
+LOGIN_DELEGATES = r"https://setup.icloud.com/setup/iosbuddy/loginDelegates"
 
 
 class PasswordProtocols(StrEnum):
@@ -40,11 +36,8 @@ class Operations(StrEnum):
 	INIT = "init"
 	COMPLETE = "complete"
 
-	# def __getattribute__(self, name):
-	# 	return str()
-
 @dataclass
-class ReqDataGENERAL:
+class ReqDataGENERAL(ABC):
 	o: Operations
 
 	def __iter__(self):
@@ -74,6 +67,21 @@ class ReqDataCOMPLETE(ReqDataGENERAL):
 	M1: bytes
 	u: str
 
+def generate_headers() -> dict:
+	headers = {
+		# 'Host': 'gsa.apple.com',
+		'Content-Type': 'text/x-xml-plist',
+		'Accept': '*/*',
+		'Accept-Language': 'en-us',
+		'User-Agent': 'akd/1.0 CFNetwork/978.0.7 Darwin/18.7.0'
+	}
+	
+	return headers
+
+def check_response(res: dict) -> bool:
+	if res['Response']['Status']['hsc'] != 200 or res['Response']['Status']['ec'] != 0:
+			raise Exception(f"Request Failed - {res['Response']['Status']['em']}")
+
 def request_2fa(identity_token: str, code: str | None = None, anisette_data: dict | None = None) -> None:
 	if anisette_data is None:
 		anisette_data = get_anisette_data()
@@ -98,15 +106,18 @@ def request_2fa(identity_token: str, code: str | None = None, anisette_data: dic
 
 	request_url = APPLE_2FA_URL + ("securitycode" if code is not None else "")
 	print(f"Sending 2fa Request to {request_url}")
-	res = requests.post(url=request_url, json=body, headers=headers, verify=False)
-	print(res)
-	# pprint.pprint(dict(res.headers))
-	# print(res.content.decode())
+	res = requests.post(
+		url=request_url,
+		json=body,
+		headers=headers,
+		verify=False
+	)
+	
 	if not res.ok:
 		raise Exception("Failed 2fa")
 	print("Success 2fa")
 
-def do_2fa(adsid, gsIdmsToken, anisette_data: dict | None = None):
+def do_2fa(adsid, gsIdmsToken, anisette_data: dict | None = None) -> None:
 	print("Statring 2FA Authentication")
 	identity_token = base64.b64encode(f"{adsid}:{gsIdmsToken}".encode()).decode()
 	# identity_token = input("Enter identity token: ")
@@ -144,7 +155,6 @@ def derive_password(password: str, salt: bytes, iterations: int, protocol: Passw
 		p = p.hex().encode("utf-8")
 	return pbkdf2.PBKDF2(p, salt, iterations, SHA256).read(32)
 	
-
 def get_anisette_data() -> dict:
 	print(f"Requesting anisette data from {ANISETTE_SERVER}")
 	try:
@@ -173,55 +183,45 @@ def do_gsa_request(req_data: ReqDataGENERAL, anisette_data: dict | None = None) 
 	if anisette_data is None:
 		anisette_data = get_anisette_data()
 
-	headers = {
-		'Host': 'gsa.apple.com',
-		'Content-Type': 'text/x-xml-plist',
-		# 'X-Mme-Client-Info': '<iPhone6,1> <iPhone OS;12.4.8;16G201> <com.apple.akd/1.0 (com.apple.akd/1.0)>',
-		# 'X-Mme-Client-Info': "<MacBookPro18,3> <Mac OS X;13.4.1;22F8> <com.apple.AOSKit/282 (com.apple.dt.Xcode/3594.4.19)>",
-		'X-MMe-Client-Info': anisette_data["X-MMe-Client-Info"],
-		'Accept': '*/*',
-		'Accept-Language': 'en-us',
-		'User-Agent': 'akd/1.0 CFNetwork/978.0.7 Darwin/18.7.0'
-	}
+	headers = generate_headers()
+	headers['X-MMe-Client-Info'] = anisette_data['X-MMe-Client-Info']
 
 	data = {
 		"Header": {"Version": "1.0.1"},
-        "Request": {"cpd": generate_cpd(anisette_data)},
+        "Request": {"cpd": generate_cpd(anisette_data)}
 	}
 
 	request: dict = data['Request']
 	request.update(req_data)
 
-	
 
-	res = requests.post(url=APPLE_URL, data=plist.dumps(data), headers=headers, verify=False)
-	return plist.loads(res.content)
+	res = plist.loads(
+		requests.post(
+			url=APPLE_URL,
+			data=plist.dumps(data),
+			headers=headers, verify=False).content
+	)
+	pprint.pprint(res)
+	check_response(res)
+	return res
 
-def gsa_login(username: str, password: bytes):
+def gsa_login(username: str, password: bytes) -> dict:
 
 	user = srp.User(username, bytes(), hash_alg=srp.SHA256, ng_type=srp.NG_2048)
 	_, A = user.start_authentication()
 
-	anisette_data = get_anisette_data()
+	anisette_data = None
 
 	print("Sending Request 1 - INIT")
 	response1 = do_gsa_request(ReqDataINIT(o=Operations.INIT, A2k=A, u=username), anisette_data=anisette_data)['Response']
-	# pprint.pprint(response1)
-
-	if response1['Status']['hsc'] != 200:
-		raise Exception("Request 1 Failed")
-	# if response1['sp'] != PasswordProtocols.S2K.value:
-	# 	raise Exception("s2k_fo derivition protocol still not implemented")
 
 	protocol = PasswordProtocols.S2K if response1['sp'] == PasswordProtocols.S2K.value else PasswordProtocols.S2K_FO
-	print(protocol.value)
 	user.p = derive_password(password, response1['s'], response1['i'], protocol=protocol)
 	
 	M1 = user.process_challenge(response1['s'], response1['B'])
 
 	print("Sending Request 2 - COMPLETE")
 	response2 = do_gsa_request(ReqDataCOMPLETE(o=Operations.COMPLETE, c=response1['c'], M1=M1, u=username), anisette_data=anisette_data)['Response']
-	# pprint.pprint(response2)
 
 	M2 = response2['M2']
 
@@ -232,25 +232,48 @@ def gsa_login(username: str, password: bytes):
 	spd = response2['spd']
 
 	spd = decrypt_spd(spd, user.get_session_key())
-	pprint.pprint(spd)
 
 	adsid = spd['adsid']
 	gsIdmsToken = spd['GsIdmsToken']
-	print(response2['Status'].get('au'))
 	if response2['Status'].get('au') in ['secondaryAuth', 'trustedDeviceSecondaryAuth']:
 		do_2fa(adsid, gsIdmsToken)
 
-		gsa_login(username, password)
-		
+		return gsa_login(username, password)
+	
+	return spd
 
-	
-	
+def icloud_login(username, password):
+
+	spd = gsa_login(username, password)
+	pet = spd['t']['com.apple.gs.idms.pet']['token']
+	adsid = spd['adsid']
+
+	headers = generate_headers()
+	headers['X-Apple-ADSID'] = adsid
+	headers.update(get_anisette_data())
+
+	data = {
+		'apple-id': username,
+		'delegates': {'com.apple.mobileme':{}},
+		'password': pet,
+		'client-id': str(USER_ID)
+	}
+
+	print("Sending Login Delegates Request")
+	r = requests.post(
+		url=LOGIN_DELEGATES,
+		auth=(username, pet),
+		data=plist.dumps(data),
+		headers=headers,
+		verify=False
+	)
+	print(r)
+	return plist.loads(r.content)
+
 
 
 def main():
-	gsa_login("","")
-	# do_2fa("","", get_anisette_data())
-
+	res = icloud_login("","")
 
 if __name__ == "__main__":
 	main()
