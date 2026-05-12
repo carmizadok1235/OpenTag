@@ -7,6 +7,8 @@
 #include <NimBLEDevice.h>
 #include <uECC.h>
 #include <crypto.h>
+#include <mbedtls/base64.h>
+#include <mbedtls/sha256.h>
 // #include <esp_gap_ble_api.h>
 // #include <esp_mac.h>
 
@@ -60,6 +62,20 @@ uint8_t macAddress[MAC_ADDRESS_SIZE];
 
 NimBLEAdvertising* pAdvertising = nullptr;
 NimBLEAdvertisementData* advData = nullptr;
+
+// KDF 
+const uint8_t update_shared_info[] = {'u', 'p', 'd', 'a', 't', 'e'};
+const uint8_t diversify_shared_info[] = {'d', 'i', 'v', 'e', 'r', 's', 'i', 'f', 'y'};
+
+typedef struct {
+  const uint8_t* shared_info;
+  short shared_info_len;
+  uint8_t counter;
+  short output_len;
+} Operation;
+
+const Operation UPDATE = {update_shared_info, 6, 0x01, 32};
+const Operation DIVERSIFY = {diversify_shared_info, 9, 0x03, 96};
 
 static int RNG(uint8_t *dest, unsigned size) {
   // Use the least-significant bits from the ADC for an unconnected pin (or connected to a source of 
@@ -175,13 +191,99 @@ void printBytesRepr(std::vector<uint8_t> bytes){
   Serial.println();
 }
 
+void printBytesRepr(uint8_t* bytes, int len){
+  for (int i = 0; i < len; i++){
+    Serial.printf("%02X ", bytes[i]);
+  }
+  Serial.println();
+}
+
+void printBase64Repr(uint8_t* bytes, int len){
+  uint8_t output[128];
+  size_t output_len;
+
+  mbedtls_base64_encode(
+    output,
+    sizeof(output),
+    &output_len,
+    bytes,
+    len
+  );
+
+  Serial.print("base64 Repr of Private Key: ");
+  output[output_len] = 0;
+  Serial.printf("%s\n", (char*)output);
+}
+
+uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation function
+  // printBytesRepr(key, SYMMETRIC_KEY_LEN);
+
+  uint8_t* input = (uint8_t*)malloc(sizeof(uint8_t)*(SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len)); // maximum input we need for both operations.
+                                                                                             // where UPDATE will result 42 bytes and DIVERSIFY will result 45 bytes.
+  uint8_t* output = (uint8_t*)malloc(sizeof(uint8_t)*operation.output_len);
+
+  memcpy(input, key, SYMMETRIC_KEY_LEN);
+
+  for (int i = SYMMETRIC_KEY_LEN; i < SYMMETRIC_KEY_LEN+4; i++){
+    input[i] = 0x00;
+  }
+
+  memcpy(input+SYMMETRIC_KEY_LEN+4, operation.shared_info, operation.shared_info_len);
+
+  uint8_t temp[32];
+  for (int i = 1; i < operation.counter+1; i++){
+    input[SYMMETRIC_KEY_LEN+3] = i;
+
+    // printBytesRepr(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len);
+
+    mbedtls_sha256(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len, temp, 0);
+    memcpy(output+32*(i-1), temp, 32);
+  }
+  // printBytesRepr(output, operation.output_len);
+  memcpy(symmetric_k, output, SYMMETRIC_KEY_LEN);
+
+  free(input);
+  // free(output);
+  return output;
+}
+
+void rollKeys(){
+  uint8_t* derived = kdf(symmetric_k, UPDATE);
+  memcpy(symmetric_k, derived, UPDATE.output_len);
+  free(derived);
+
+  // uint8_t[] // need to implement this function.
+}
+
+void advertise(){
+  kdf(symmetric_k, UPDATE);
+  kdf(symmetric_k, DIVERSIFY);
+  if (!setPublicKey(ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
+    dbg_print("Failed to set public key");
+  }
+
+  advData->addData(packet_data, APPLE_BLE_PACKET_LENGTH);
+  dbg_print("Data added to advData.");
+
+  // Serial.print("---------------------------------------------------------------------------------------------------------\n");
+  dbg_print("final BLE packet:\n");
+  // uint8_t* mAddr = macAddress;
+  Serial.printf("Mac Address: %02x %02x %02x %02x %02x %02x\n", macAddress[5], macAddress[4], macAddress[3], macAddress[2], macAddress[1], macAddress[0]);
+  printBytesRepr(advData->getPayload());
+  
+  pAdvertising->setAdvertisementData(*advData);
+  pAdvertising->start();
+}
+
 void setup() {
   Serial.begin(115200);
   delay(5000);
-  dbg_print("Testing ECC");
+  // dbg_print("Testing ECC");
   
   dbg_print("Initializing MasterBeaconKey");
   initMasterBeacon();
+  printBytesRepr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
+  printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
 
   initAppleBLEPacket();
 
@@ -202,22 +304,9 @@ void setup() {
   advData = new NimBLEAdvertisementData();
 }
 
+
 void loop() {
-  if (!setPublicKey(ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
-    dbg_print("Failed to set public key");
-  }
-
-  advData->addData(packet_data, APPLE_BLE_PACKET_LENGTH);
-  dbg_print("Data added to advData.");
-
-  // Serial.print("---------------------------------------------------------------------------------------------------------\n");
-  dbg_print("final BLE packet:\n");
-  uint8_t* mAddr = macAddress;
-  Serial.printf("Mac Address: %02x %02x %02x %02x %02x %02x\n", mAddr[5], mAddr[4], mAddr[3], mAddr[2], mAddr[1], mAddr[0]);
-  printBytesRepr(advData->getPayload());
-  
-  pAdvertising->setAdvertisementData(*advData);
-  pAdvertising->start();
+  advertise();
   dbg_print("Started Advertising.");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
   delay(10000);
