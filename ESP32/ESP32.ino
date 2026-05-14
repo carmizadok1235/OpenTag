@@ -9,6 +9,7 @@
 #include <crypto.h>
 #include <mbedtls/base64.h>
 #include <mbedtls/sha256.h>
+#include <mbedtls/bignum.h>
 // #include <esp_gap_ble_api.h>
 // #include <esp_mac.h>
 
@@ -77,6 +78,10 @@ typedef struct {
 const Operation UPDATE = {update_shared_info, 6, 0x01, 32};
 const Operation DIVERSIFY = {diversify_shared_info, 9, 0x03, 96};
 
+// big numbers for rolling keys
+mbedtls_mpi d0, u, v, di, n;
+
+
 static int RNG(uint8_t *dest, unsigned size) {
   // Use the least-significant bits from the ADC for an unconnected pin (or connected to a source of 
   // random noise). This can take a long time to generate random data if the result of analogRead(0) 
@@ -116,7 +121,6 @@ void initMasterBeacon(){
 
   if (!uECC_make_key(ecc_public_k, ecc_private_k, curve)){
     dbg_print("Failed to generate private-public key pair.");
-    exit(1);
   }
 
   randomSeed(analogRead(A0));
@@ -184,6 +188,23 @@ void initAppleBLEPacket(){
   buildPacketStructure();
 }
 
+void initBigNumbers(){
+  uint8_t p224_n[28] = {
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x16, 0xA2,
+    0xE0, 0xB8, 0xF0, 0x3E, 0x13, 0xDD, 0x29, 0x45,
+    0x5C, 0x5C, 0x2A, 0x3D
+  };
+  mbedtls_mpi_init(&d0);
+  mbedtls_mpi_init(&u);
+  mbedtls_mpi_init(&v);
+  mbedtls_mpi_init(&di);
+  mbedtls_mpi_init(&n);
+
+  mbedtls_mpi_read_binary(&d0, ecc_private_k, 28);
+  mbedtls_mpi_read_binary(&n, p224_n, 28);
+}
+
 void printBytesRepr(std::vector<uint8_t> bytes){
   for (int i = 0; i < bytes.size(); i++){
     Serial.printf("%02X ", bytes[i]);
@@ -210,18 +231,15 @@ void printBase64Repr(uint8_t* bytes, int len){
     len
   );
 
-  Serial.print("base64 Repr of Private Key: ");
+  // Serial.print("base64 Repr of Private Key: ");
   output[output_len] = 0;
   Serial.printf("%s\n", (char*)output);
 }
 
 uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation function
-  // printBytesRepr(key, SYMMETRIC_KEY_LEN);
-
   uint8_t* input = (uint8_t*)malloc(sizeof(uint8_t)*(SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len)); // maximum input we need for both operations.
                                                                                              // where UPDATE will result 42 bytes and DIVERSIFY will result 45 bytes.
   uint8_t* output = (uint8_t*)malloc(sizeof(uint8_t)*operation.output_len);
-
   memcpy(input, key, SYMMETRIC_KEY_LEN);
 
   for (int i = SYMMETRIC_KEY_LEN; i < SYMMETRIC_KEY_LEN+4; i++){
@@ -248,20 +266,37 @@ uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation fu
 }
 
 void rollKeys(){
-  uint8_t* derived = kdf(symmetric_k, UPDATE);
+  uint8_t* derived;
+  derived = kdf(symmetric_k, UPDATE);
   memcpy(symmetric_k, derived, UPDATE.output_len);
   free(derived);
 
-  // uint8_t[] // need to implement this function.
+  derived = kdf(symmetric_k, DIVERSIFY);
+  // read from uint8_t arrays
+  mbedtls_mpi_read_binary(&u, derived, 36);
+  mbedtls_mpi_read_binary(&v, derived+36, 36);
+  free(derived);
+
+  mbedtls_mpi_mul_mpi(&di, &d0, &u);        // di = d0 * u
+  mbedtls_mpi_add_mpi(&di, &di, &v);        // di = di + v
+  mbedtls_mpi_mod_mpi(&di, &di, &n);        // di = di mod n
+
+  mbedtls_mpi_write_binary(&di, ecc_private_k, ECC_PRIVATE_KEY_LEN);
+
+  if (!uECC_compute_public_key(ecc_private_k, ecc_public_k, curve)){ // pi = di * G
+    dbg_print("Failed to compute public key");
+  }
 }
 
 void advertise(){
-  kdf(symmetric_k, UPDATE);
-  kdf(symmetric_k, DIVERSIFY);
+  rollKeys();
+  Serial.print("Base64 Repr of private key: ");
+  printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
   if (!setPublicKey(ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
     dbg_print("Failed to set public key");
   }
 
+  advData->clearData();
   advData->addData(packet_data, APPLE_BLE_PACKET_LENGTH);
   dbg_print("Data added to advData.");
 
@@ -282,10 +317,12 @@ void setup() {
   
   dbg_print("Initializing MasterBeaconKey");
   initMasterBeacon();
-  printBytesRepr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
+  // printBytesRepr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
   printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
 
   initAppleBLEPacket();
+
+  initBigNumbers();
 
   // if (!appleBLEPacket->setPublicKey(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
   //   dbg_print("Failed to set mac address.");
@@ -309,7 +346,8 @@ void loop() {
   advertise();
   dbg_print("Started Advertising.");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
-  delay(10000);
+  delay(15UL * 60UL * 1000UL);
+  // delay(10000);
   pAdvertising->stop();
   dbg_print("Stopped Advertising");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
