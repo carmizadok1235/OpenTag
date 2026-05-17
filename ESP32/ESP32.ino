@@ -79,7 +79,7 @@ const Operation UPDATE = {update_shared_info, 6, 0x01, 32};
 const Operation DIVERSIFY = {diversify_shared_info, 9, 0x03, 96};
 
 // big numbers for rolling keys
-mbedtls_mpi d0, u, v, di, n;
+mbedtls_mpi d0, u, v, di, n, n_minus_1, one;
 
 
 static int RNG(uint8_t *dest, unsigned size) {
@@ -200,9 +200,15 @@ void initBigNumbers(){
   mbedtls_mpi_init(&v);
   mbedtls_mpi_init(&di);
   mbedtls_mpi_init(&n);
+  mbedtls_mpi_init(&n_minus_1);
+  mbedtls_mpi_init(&one);
+
 
   mbedtls_mpi_read_binary(&d0, ecc_private_k, 28);
   mbedtls_mpi_read_binary(&n, p224_n, 28);
+  
+  mbedtls_mpi_lset(&one, 1);
+  mbedtls_mpi_sub_mpi(&n_minus_1, &n, &one);  // n_minus_1 = n - 1
 }
 
 void printBytesRepr(std::vector<uint8_t> bytes){
@@ -236,7 +242,7 @@ void printBase64Repr(uint8_t* bytes, int len){
   Serial.printf("%s\n", (char*)output);
 }
 
-uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation function
+uint8_t* kdf(uint8_t* key, const Operation operation){ // ANSI X.963 key derivation function
   uint8_t* input = (uint8_t*)malloc(sizeof(uint8_t)*(SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len)); // maximum input we need for both operations.
                                                                                              // where UPDATE will result 42 bytes and DIVERSIFY will result 45 bytes.
   uint8_t* output = (uint8_t*)malloc(sizeof(uint8_t)*operation.output_len);
@@ -257,8 +263,13 @@ uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation fu
     mbedtls_sha256(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len, temp, 0);
     memcpy(output+32*(i-1), temp, 32);
   }
-  // printBytesRepr(output, operation.output_len);
-  memcpy(symmetric_k, output, SYMMETRIC_KEY_LEN);
+  if (operation.counter == 1){
+    Serial.print("hex digest: ");
+    printBytesRepr(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len);
+    Serial.print("sha256: ");
+    printBytesRepr(output, operation.output_len);
+  }
+  // memcpy(symmetric_k, output, SYMMETRIC_KEY_LEN);
 
   free(input);
   // free(output);
@@ -268,7 +279,7 @@ uint8_t* kdf(uint8_t* key, Operation operation){ // ANSI X.963 key derivation fu
 void rollKeys(){
   uint8_t* derived;
   derived = kdf(symmetric_k, UPDATE);
-  memcpy(symmetric_k, derived, UPDATE.output_len);
+  memcpy(symmetric_k, derived, SYMMETRIC_KEY_LEN);
   free(derived);
 
   derived = kdf(symmetric_k, DIVERSIFY);
@@ -276,6 +287,14 @@ void rollKeys(){
   mbedtls_mpi_read_binary(&u, derived, 36);
   mbedtls_mpi_read_binary(&v, derived+36, 36);
   free(derived);
+
+  // u = (u % (n-1)) + 1
+  mbedtls_mpi_mod_mpi(&u, &u, &n_minus_1);    // u = u % (n-1)
+  mbedtls_mpi_add_mpi(&u, &u, &one);          // u = u + 1
+
+  // v = (v % (n-1)) + 1
+  mbedtls_mpi_mod_mpi(&v, &v, &n_minus_1);    // v = v % (n-1)
+  mbedtls_mpi_add_mpi(&v, &v, &one);          // v = v + 1
 
   mbedtls_mpi_mul_mpi(&di, &d0, &u);        // di = d0 * u
   mbedtls_mpi_add_mpi(&di, &di, &v);        // di = di + v
@@ -318,7 +337,11 @@ void setup() {
   dbg_print("Initializing MasterBeaconKey");
   initMasterBeacon();
   // printBytesRepr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
+  Serial.print("sk0: ");
+  printBase64Repr(symmetric_k, SYMMETRIC_KEY_LEN);
+  Serial.print("\nd0: ");
   printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
+  Serial.println();
 
   initAppleBLEPacket();
 
