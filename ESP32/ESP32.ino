@@ -237,12 +237,11 @@ void printBase64Repr(uint8_t* bytes, int len){
     len
   );
 
-  // Serial.print("base64 Repr of Private Key: ");
   output[output_len] = 0;
   Serial.printf("%s\n", (char*)output);
 }
 
-uint8_t* kdf(uint8_t* key, const Operation operation){ // ANSI X.963 key derivation function
+uint8_t* x963kdf(uint8_t* key, const Operation operation){ // ANSI X.963 key derivation function
   uint8_t* input = (uint8_t*)malloc(sizeof(uint8_t)*(SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len)); // maximum input we need for both operations.
                                                                                              // where UPDATE will result 42 bytes and DIVERSIFY will result 45 bytes.
   uint8_t* output = (uint8_t*)malloc(sizeof(uint8_t)*operation.output_len);
@@ -258,31 +257,21 @@ uint8_t* kdf(uint8_t* key, const Operation operation){ // ANSI X.963 key derivat
   for (int i = 1; i < operation.counter+1; i++){
     input[SYMMETRIC_KEY_LEN+3] = i;
 
-    // printBytesRepr(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len);
-
     mbedtls_sha256(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len, temp, 0);
     memcpy(output+32*(i-1), temp, 32);
   }
-  if (operation.counter == 1){
-    Serial.print("hex digest: ");
-    printBytesRepr(input, SYMMETRIC_KEY_LEN+sizeof(int)+operation.shared_info_len);
-    Serial.print("sha256: ");
-    printBytesRepr(output, operation.output_len);
-  }
-  // memcpy(symmetric_k, output, SYMMETRIC_KEY_LEN);
 
   free(input);
-  // free(output);
   return output;
 }
 
-void rollKeys(){
+void rollKeys(){ // https://arxiv.org/pdf/2103.02282 6.1 Cryptography
   uint8_t* derived;
-  derived = kdf(symmetric_k, UPDATE);
+  derived = x963kdf(symmetric_k, UPDATE);
   memcpy(symmetric_k, derived, SYMMETRIC_KEY_LEN);
   free(derived);
 
-  derived = kdf(symmetric_k, DIVERSIFY);
+  derived = x963kdf(symmetric_k, DIVERSIFY);
   // read from uint8_t arrays
   mbedtls_mpi_read_binary(&u, derived, 36);
   mbedtls_mpi_read_binary(&v, derived+36, 36);
@@ -347,14 +336,7 @@ void setup() {
 
   initBigNumbers();
 
-  // if (!appleBLEPacket->setPublicKey(masterBeaconKey->ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
-  //   dbg_print("Failed to set mac address.");
-  //   exit(1);
-  // }
-
-  // Serial.print("---------------------------------------------------------------------------------------------------------\n");
   NimBLEDevice::init("");
-  // BLEDevice::init("");
   dbg_print("BLEDevice initialized.");
   dbg_print(NimBLEDevice::getAddress().toString().c_str());
 
@@ -364,12 +346,11 @@ void setup() {
   advData = new NimBLEAdvertisementData();
 }
 
-
 void loop() {
   advertise();
   dbg_print("Started Advertising.");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
-  delay(15UL * 60UL * 1000UL);
+  delay(15UL * 60UL * 1000UL); // 15 minutes
   // delay(10000);
   pAdvertising->stop();
   dbg_print("Stopped Advertising");
