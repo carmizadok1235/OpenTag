@@ -43,7 +43,7 @@ async def create_user(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     if await crud.get_user_by_username(user_data.username, db):
-        raise AlreadyExistException()
+        raise AlreadyExistException("username")
     
     return await crud.create_user(user_data, db)
 
@@ -54,13 +54,58 @@ async def login_for_access_token(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     user = await crud.get_user_by_username(form_data.username, db)
-    
-    if user is None or verify_password(form_data.password, user.password_hash):
+
+    if user is None or not verify_password(form_data.password, user.password_hash):
         raise IncorrectDetailsException()
     
-    access_token = create_access_token(form_data)
+    access_token = create_access_token({"sub": str(user.id)})
 
     return Token(access_token=access_token, token_type=settings.token_type)
+
+@router.get("/me", response_model=UserPrivateResponse)
+async def get_current_user(
+    curr_user: CurrentUser
+):
+    return curr_user
+
+@router.patch("/{user_id}", response_model=UserPrivateResponse)
+async def update_user(
+    user_id: int,
+    user_data: UserUpdate,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    user = await crud.get_user_by_id(user_id, db)
+
+    if user is None:
+        raise UserNotFoundException()
+    
+    if user.id != curr_user.id:
+        raise InvalidTokenException()
+    
+    if user_data.username is not None and user.username != user_data.username:
+        if await crud.get_user_by_username(user_data.username, db):
+            raise AlreadyExistException("username")
+        
+    return await crud.update_user(user, user_data, db)
+
+
+@router.get("/{user_id}/devices", response_model=list[DeviceResponse])
+async def get_devices(
+    user_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    user = await crud.get_user_by_id(user_id, db)
+
+    if user is None:
+        raise UserNotFoundException()
+    
+    if curr_user.id != user.id:
+        raise InvalidTokenException()
+    
+    return await crud.get_devices_of_user_id(user_id, db)
+
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
@@ -79,19 +124,3 @@ async def delete_user(
     await db.delete(user)
     await db.commit()
 
-
-@router.get("/{user_id}/devices", response_model=list[DeviceResponse])
-async def get_devices(
-    user_id: int,
-    curr_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    user = await crud.get_user_by_id(user_id, db)
-
-    if user is None:
-        raise UserNotFoundException()
-    
-    if curr_user.id != user.id:
-        raise InvalidTokenException()
-    
-    return await crud.get_devices_of_user_id(user_id, db)

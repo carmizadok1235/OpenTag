@@ -13,6 +13,12 @@ class UserNotFoundException(_NotFoundException):
             "User not found"
         )
 
+class DeviceNotFoundException(_NotFoundException):
+    def __init__(self):
+        super().__init__(
+            "Device not found"
+        )
+
 class AlreadyExistException(HTTPException):
     def __init__(self, field):
         super().__init__(

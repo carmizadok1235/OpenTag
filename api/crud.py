@@ -5,8 +5,12 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from schemas import (
-    UserCreate
+    UserUpdate,
+    UserCreate,
+    DeviceCreate
 )
+
+from base64 import b64decode
 
 from security import hash_password
 
@@ -36,6 +40,15 @@ async def get_devices_of_user_id(user_id: int, db: AsyncSession) -> list[Device]
 
     return result.scalars().all()
 
+async def update_user(user: User, user_data: UserUpdate, db: AsyncSession):
+    for f, v in user_data.model_dump(exclude_unset=True).items():
+        setattr(user, f, v.lower() if isinstance(v, str) else v)
+
+    await db.commit()
+    await db.refresh(user)
+
+    return user
+
 async def create_user(user_data: UserCreate, db: AsyncSession) -> User:
     new_user = User(
         username=user_data.username.lower(),
@@ -49,3 +62,27 @@ async def create_user(user_data: UserCreate, db: AsyncSession) -> User:
     await db.refresh(new_user)
 
     return new_user
+
+async def get_device_by_id(device_id: int, db: AsyncSession):
+    result = await db.execute(
+        select(Device)
+        .options(selectinload(Device.owner))
+        .where(Device.id == device_id)
+    )
+
+    return result.scalars().first()
+
+async def create_devcie(device_data: DeviceCreate, curr_user_id: int, db: AsyncSession):
+    
+
+    new_device = Device(
+        user_id=curr_user_id,
+        symmetric_key=device_data.symmetric_key,
+        private_key=device_data.private_key
+    )
+
+    db.add(new_device)
+    await db.commit()
+    await db.refresh(new_device)
+
+    return new_device

@@ -21,7 +21,7 @@ class UserPrivateResponse(BaseModel):
     id: int
     username: str
     appleid : EmailStr
-    json_account_path: FilePath
+    json_account_path: FilePath | None
 
 class DeviceBase(BaseModel): 
     pass

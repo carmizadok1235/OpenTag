@@ -19,7 +19,9 @@ class User(Base):
     devices: Mapped[list['Device']] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
     @property
-    def json_account_path(self) -> str:
+    def json_account_path(self) -> str | None:
+        if self.json_account_file is None:
+            return None
         return f"/accounts/{self.json_account_file}"
 
 class Device(Base):
@@ -27,8 +29,8 @@ class Device(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
-    symmetric_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=True)
+    symmetric_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    private_key: Mapped[str] = mapped_column(String(200), nullable=False)
     time_paired: Mapped[datetime] = mapped_column(DateTime(timezone=UTC), default=lambda: datetime.now(UTC))
 
     owner: Mapped[User] = relationship(back_populates="devices")
