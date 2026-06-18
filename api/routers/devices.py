@@ -10,7 +10,6 @@ import crud
 from schemas import DeviceResponse, DeviceCreate
 
 from exceptions import (
-    UserNotFoundException,
     DeviceNotFoundException,
     InvalidTokenException
 )
@@ -25,6 +24,14 @@ async def create_device(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     return await crud.create_devcie(device_data, curr_user.id, db)
+
+
+@router.get("", response_model=list[DeviceResponse])
+async def get_devices(
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):  
+    return await crud.get_devices_of_user_id(curr_user.id, db)
 
 
 @router.get("/{device_id}", response_model=DeviceResponse)

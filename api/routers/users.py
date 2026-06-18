@@ -90,23 +90,6 @@ async def update_user(
     return await crud.update_user(user, user_data, db)
 
 
-@router.get("/{user_id}/devices", response_model=list[DeviceResponse])
-async def get_devices(
-    user_id: int,
-    curr_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    user = await crud.get_user_by_id(user_id, db)
-
-    if user is None:
-        raise UserNotFoundException()
-    
-    if curr_user.id != user.id:
-        raise InvalidTokenException()
-    
-    return await crud.get_devices_of_user_id(user_id, db)
-
-
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,

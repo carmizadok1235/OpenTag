@@ -10,7 +10,7 @@ from fastapi.exception_handlers import (
 
 from database.database import engine, Base
 
-from routers import users, devices
+from routers import apple, users, devices
 
 
 @asynccontextmanager
@@ -27,7 +27,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(devices.router, prefix="/api/devices", tags=["devices"])
-
+app.include_router(apple.router, prefix="/api/applelogin", tags="apple login")
 
 
 

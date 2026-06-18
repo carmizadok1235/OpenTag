@@ -45,3 +45,17 @@ class InvalidTokenException(_UnauthorizedException):
         super().__init__(
             "Invalid or expired token"
         )
+
+class NoSmsTwoFactorMethodAuthException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="sms second factor method is not available"
+        )
+
+class AppleAccountLoginException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to login into apple account"
+        )

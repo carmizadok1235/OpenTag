@@ -23,6 +23,9 @@ class User(Base):
         if self.json_account_file is None:
             return None
         return f"/accounts/{self.json_account_file}"
+    
+    def build_json_file_name(self) -> str:
+        return f"/{self.appleid}_{self.id}"
 
 class Device(Base):
     __tablename__ = "devices"
