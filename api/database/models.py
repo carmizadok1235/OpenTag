@@ -22,10 +22,10 @@ class User(Base):
     def json_account_path(self) -> str | None:
         if self.json_account_file is None:
             return None
-        return f"/accounts/{self.json_account_file}"
+        return f"./accounts/{self.json_account_file}"
     
     def build_json_file_name(self) -> str:
-        return f"/{self.appleid}_{self.id}"
+        return f"account{self.id}.json"
 
 class Device(Base):
     __tablename__ = "devices"

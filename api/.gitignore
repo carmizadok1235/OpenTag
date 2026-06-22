@@ -16,4 +16,4 @@ wheels/
 *.db
 
 # accounts
-accounts/
+accounts/*

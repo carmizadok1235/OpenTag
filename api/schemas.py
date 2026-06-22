@@ -46,3 +46,6 @@ class Token(BaseModel):
 class AppleAccountStatus(BaseModel):
     appleid: str
     verified: bool
+
+class AppleSubmit2faCode(BaseModel):
+    code: str

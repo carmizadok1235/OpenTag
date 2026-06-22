@@ -12,14 +12,19 @@ from database.database import engine, Base
 
 from routers import apple, users, devices
 
+from findmy import AsyncAppleAccount
+from findmy.reports.twofactor import AsyncSecondFactorMethod
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Startup
+    _app.state.sessions = {} 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
+    _app.state.sessions.clear()
 
 # app = FastAPI()
 app = FastAPI(lifespan=lifespan)
@@ -27,8 +32,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(devices.router, prefix="/api/devices", tags=["devices"])
-app.include_router(apple.router, prefix="/api/applelogin", tags="apple login")
-
+app.include_router(apple.router, prefix="/api/apple", tags=["apple login"])
 
 
 @app.exception_handler(HTTPException)

@@ -14,6 +14,7 @@ from security import (
     CurrentUser
 )
 
+import os
 
 from database import models
 from database.database import get_db
@@ -103,6 +104,9 @@ async def delete_user(
     
     if curr_user.id != user.id:
         raise InvalidTokenException()
+    
+    if user.json_account_file is not None:
+        os.remove(user.json_account_path)
     
     await db.delete(user)
     await db.commit()

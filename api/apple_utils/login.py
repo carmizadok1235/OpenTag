@@ -6,8 +6,7 @@ from findmy import (
     LocalAnisetteProvider,
     LoginState,
     RemoteAnisetteProvider,
-    SmsSecondFactorMethod,
-    Async,
+    SmsSecondFactorMethod
 )
 from findmy.reports.twofactor import AsyncSecondFactorMethod
 
@@ -17,25 +16,33 @@ from exceptions import NoSmsTwoFactorMethodAuthException
 
 from config import settings
 
-async def verfiy_2fa(account: AsyncAppleAccount):
+def logged_in(user: User, account: AsyncAppleAccount):
+    account.to_json(
+        settings.account_store_path.joinpath(user.build_json_file_name())
+    )
+
+
+async def trigger_2fa(account: AsyncAppleAccount):
     # This only supports SMS methods for now
-        methods: list[AsyncSecondFactorMethod] = await account.get_2fa_methods()
+    methods: list[AsyncSecondFactorMethod] = await account.get_2fa_methods()
 
-        # Print the (masked) phone numbers
-        ind = None
-        for i, method in enumerate(methods):
-            if isinstance(method, SmsSecondFactorMethod):
-                # print(f"{i} - SMS ({method.phone_number})")
-                ind = i
+    # Print the (masked) phone numbers
+    ind = None
+    for i, method in enumerate(methods):
+        if isinstance(method, SmsSecondFactorMethod):
+            # print(f"{i} - SMS ({method.phone_number})")
+            ind = i
 
-        if ind is None:
-            raise NoSmsTwoFactorMethodAuthException()
-        method = methods[ind]
-        await method.request()
-        code = input("Code? > ")
+    if ind is None:
+        raise NoSmsTwoFactorMethodAuthException()
+    method = methods[ind]
+    await method.request()
 
-        # This automatically finishes the post-2FA login flow
-        await method.submit(code)
+    return method
+    # code = input("Code? > ")
+
+    # This automatically finishes the post-2FA login flow
+    # await method.submit(code)
 
 async def login_async(account: AsyncAppleAccount, user: User) -> LoginState:
     email = user.appleid
@@ -43,9 +50,7 @@ async def login_async(account: AsyncAppleAccount, user: User) -> LoginState:
 
     state = await account.login(email, password)
 
-    if state == LoginState.AUTHENTICATED:
-        account.to_json(settings.account_store_path + user.build_json_file_name())    
-    elif state != LoginState.REQUIRE_2FA:  # Account requires 2FA
+    if state == LoginState.LOGGED_OUT:
         print(f"--------- Login State is {state} --------- ")
         raise Exception()
     
@@ -56,7 +61,10 @@ async def get_account_async(
 ) -> AsyncAppleAccount:
     """Tries to restore a saved Apple account, or prompts the user for login otherwise. (async)"""
     try:
-        acc = AsyncAppleAccount.from_json(settings.account_store_path, anisette_libs_path=settings.anisette_libs_path)
+        acc = AsyncAppleAccount.from_json(
+            settings.account_store_path.joinpath(user.build_json_file_name()),
+            anisette_libs_path=settings.anisette_libs_path
+        )
     except FileNotFoundError:
         ani = (
             LocalAnisetteProvider(libs_path=settings.anisette_libs_path)
