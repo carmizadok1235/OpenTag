@@ -10,11 +10,11 @@ from findmy import (
 )
 from findmy.reports.twofactor import AsyncSecondFactorMethod
 
-from database.models import User
+from app.database.models import User
 
-from exceptions import NoSmsTwoFactorMethodAuthException
+from app.exceptions import NoSmsTwoFactorMethodAuthException
 
-from config import settings
+from app.config import settings
 
 def logged_in(user: User, account: AsyncAppleAccount):
     account.to_json(
@@ -50,7 +50,7 @@ async def login_async(account: AsyncAppleAccount, user: User) -> LoginState:
 
     state = await account.login(email, password)
 
-    if state == LoginState.LOGGED_OUT:
+    if state == LoginState.LOGGED_OUT: # need to change it
         print(f"--------- Login State is {state} --------- ")
         raise Exception()
     

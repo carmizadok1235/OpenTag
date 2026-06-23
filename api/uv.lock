@@ -229,6 +229,9 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.50" },
 ]
 
+[package.metadata.requires-dev]
+dev = []
+
 [[package]]
 name = "appdirs"
 version = "1.4.4"

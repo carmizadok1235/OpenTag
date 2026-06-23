@@ -3,7 +3,7 @@ from datetime import datetime, UTC
 from sqlalchemy import DateTime, ForeignKey, Integer, String, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.database import Base
+from app.database.database import Base
 
 
 class User(Base):

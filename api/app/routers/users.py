@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-import crud
-from security import (
+import app.crud as crud
+from app.security import (
     create_access_token,
     verify_password,
     CurrentUser
@@ -16,19 +16,19 @@ from security import (
 
 import os
 
-from database import models
-from database.database import get_db
-from schemas import (
+from app.database import models
+from app.database.database import get_db
+from app.schemas import (
     DeviceResponse,
     UserCreate,
     UserPrivateResponse,
-    UserUpdate,
+    UserUpdatePublic,
     Token
 )
 
-from config import settings
+from app.config import settings
 
-from exceptions import (
+from app.exceptions import (
     AlreadyExistException,
     IncorrectDetailsException,
     UserNotFoundException,
@@ -72,7 +72,7 @@ async def get_current_user(
 @router.patch("/{user_id}", response_model=UserPrivateResponse)
 async def update_user(
     user_id: int,
-    user_data: UserUpdate,
+    user_data: UserUpdatePublic,
     curr_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):

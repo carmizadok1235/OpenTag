@@ -15,6 +15,12 @@ class UserUpdate(UserBase):
     username: str | None = Field(default=None, min_length=1, max_length=50)
     appleid: EmailStr | None = Field(default=None, max_length=120)
     apple_password: str | None = Field(default=None, max_length=200)
+    # json_account_file: str | None = Field(default=None)
+
+class UserUpdatePublic(UserUpdate):
+    pass
+
+class UserUpdatePrivate(UserUpdate):
     json_account_file: str | None = Field(default=None)
 
 class UserPrivateResponse(BaseModel):

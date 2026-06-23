@@ -3,13 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.database import get_db
-from security import CurrentUser
+from app.database.database import get_db
+from app.security import CurrentUser
 
-import crud
-from schemas import DeviceResponse, DeviceCreate
+import app.crud as crud
+from app.schemas import DeviceResponse, DeviceCreate
 
-from exceptions import (
+from app.exceptions import (
     DeviceNotFoundException,
     InvalidTokenException
 )

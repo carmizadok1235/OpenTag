@@ -1,10 +1,10 @@
-from database.models import User, Device
+from app.database.models import User, Device
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas import (
+from app.schemas import (
     UserUpdate,
     UserCreate,
     DeviceCreate
@@ -12,7 +12,7 @@ from schemas import (
 
 from base64 import b64decode
 
-from security import hash_password
+from app.security import hash_password
 
 
 async def get_user_by_id(id: int, db: AsyncSession) -> User | None:

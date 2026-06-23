@@ -8,9 +8,10 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler
 )
 
-from database.database import engine, Base
+from app.database.database import engine, Base
 
-from routers import apple, users, devices
+from app.routers import apple, devices
+from app.routers import users
 
 from findmy import AsyncAppleAccount
 from findmy.reports.twofactor import AsyncSecondFactorMethod

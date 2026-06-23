@@ -8,13 +8,13 @@ from pwdlib import PasswordHash
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import User
-from database.database import get_db
-import crud
+from app.database.models import User
+from app.database.database import get_db
+import app.crud as crud
 
-from exceptions import InvalidTokenException, UserNotFoundException
+from app.exceptions import InvalidTokenException, UserNotFoundException
 
-from config import settings
+from app.config import settings
 
 password_hash = PasswordHash.recommended()
 

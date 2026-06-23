@@ -7,28 +7,27 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-import crud
-from security import (
+import app.crud as crud
+from app.security import (
     create_access_token,
     verify_password,
     CurrentUser
 )
-
-from schemas import UserUpdate
+from app.schemas import UserUpdatePrivate
 
 from findmy import LoginState, AsyncAppleAccount
 from findmy.reports.twofactor import AsyncSecondFactorMethod
 
-from exceptions import InvalidCredentialsException, InvalidVerificationCodeException, TwoFactorAuthNotTriggeredException
+from app.exceptions import InvalidCredentialsException, InvalidVerificationCodeException, TwoFactorAuthNotTriggeredException
 
-from database import models
-from database.database import get_db
+from app.database.models import User
+from app.database.database import get_db
 
-from schemas import AppleAccountStatus, AppleSubmit2faCode
+from app.schemas import AppleAccountStatus, AppleSubmit2faCode
 
-from apple_utils.login import login_async, get_account_async, trigger_2fa, logged_in
+from app.apple_utils.login import login_async, get_account_async, trigger_2fa, logged_in
 
-from config import settings
+from app.config import settings
 
 ACCOUNT_INDEX = 0
 METHOD_INDEX = 1
@@ -37,6 +36,13 @@ AppleLoginSessions: TypeAlias = dict[int, tuple[AsyncAppleAccount, AsyncSecondFa
 
 def get_sessions(request: Request) -> dict:
     return request.app.state.sessions
+
+async def on_verified(user: User, db: AsyncSession):
+    await crud.update_user(
+            user,
+            UserUpdatePrivate(json_account_file=user.build_json_file_name()),
+            db
+        )
 
 router = APIRouter()
 
@@ -58,11 +64,7 @@ async def login_to_apple_account(
     
     ver = False
     if state == LoginState.AUTHENTICATED or state == LoginState.LOGGED_IN:
-        await crud.update_user(
-            curr_user,
-            UserUpdate(json_account_file=curr_user.build_json_file_name()),
-            db
-        )
+        await on_verified(curr_user, db)
         logged_in(curr_user, account)
         ver = True
     elif state == LoginState.REQUIRE_2FA:
@@ -96,11 +98,7 @@ async def verfiy_2fa_code(
     
     # print(state)
     if state == LoginState.LOGGED_IN:
-        await crud.update_user(
-            curr_user,
-            UserUpdate(json_account_file=curr_user.build_json_file_name()),
-            db
-        )
+        on_verified(curr_user, db)
         logged_in(curr_user, account)
     else:
         raise InvalidCredentialsException()
