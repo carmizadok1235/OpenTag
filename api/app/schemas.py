@@ -55,3 +55,8 @@ class AppleAccountStatus(BaseModel):
 
 class AppleSubmit2faCode(BaseModel):
     code: str
+
+class LocationCoordinates(BaseModel):
+    longitude: float
+    latitude: float
+    minutes_updated_ago: int

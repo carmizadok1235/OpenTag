@@ -22,7 +22,7 @@ def logged_in(user: User, account: AsyncAppleAccount):
     )
 
 
-async def trigger_2fa(account: AsyncAppleAccount):
+async def trigger_2fa(account: AsyncAppleAccount) -> AsyncSecondFactorMethod:
     # This only supports SMS methods for now
     methods: list[AsyncSecondFactorMethod] = await account.get_2fa_methods()
 

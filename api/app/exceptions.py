@@ -72,9 +72,36 @@ class InvalidVerificationCodeException(_AppleAccountLoginException):
             detail="Invalid Verfication Code"
         )
 
+class JsonFileNotExistException(_AppleAccountLoginException):
+    def __init__(self):
+        super().__init__(
+            detail="Json file does not exist, first login"
+        )
+
 class TwoFactorAuthNotTriggeredException(HTTPException):
     def __init__(self):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="2fa is not triggered, first login"
+        )
+
+class InvalidKeyException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one of the keys is not valid"
+        )
+
+class InvalidBase64KeyException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one of the keys is not a valid base64"
+        )
+
+class FetchReportException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failed to fetch location report of this device"
         )

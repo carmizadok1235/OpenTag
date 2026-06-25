@@ -7,11 +7,14 @@ from app.database.database import get_db
 from app.security import CurrentUser
 
 import app.crud as crud
-from app.schemas import DeviceResponse, DeviceCreate
+from app.schemas import DeviceResponse, DeviceCreate, LocationCoordinates
+
+from app.apple_utils import reports
 
 from app.exceptions import (
     DeviceNotFoundException,
-    InvalidTokenException
+    InvalidTokenException,
+    FetchReportException
 )
 
 router = APIRouter()
@@ -50,6 +53,29 @@ async def get_devices(
     
     return device
 
+@router.get("/{device_id}/location", response_model=LocationCoordinates)
+async def get_device_location(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    location = await reports.fetch_report(
+        device=device,
+        json_file=curr_user.json_account_file,
+    )
+    # print(location)
+    if location is None:
+        raise FetchReportException()
+    
+    return location
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_device(

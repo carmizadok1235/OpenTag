@@ -25,7 +25,7 @@ from app.database.database import get_db
 
 from app.schemas import AppleAccountStatus, AppleSubmit2faCode
 
-from app.apple_utils.login import login_async, get_account_async, trigger_2fa, logged_in
+from app.apple_utils import login
 
 from app.config import settings
 
@@ -55,9 +55,9 @@ async def login_to_apple_account(
     if curr_user.json_account_path is not None:
         return AppleAccountStatus(appleid=curr_user.appleid, verified=True)
 
-    account = await get_account_async(curr_user)
+    account = await login.get_account_async(curr_user)
     try:
-        state = await login_async(account, curr_user)
+        state = await login.login_async(account, curr_user)
         # print(f"State is {state}")
     except:
         raise InvalidCredentialsException()
@@ -65,10 +65,10 @@ async def login_to_apple_account(
     ver = False
     if state == LoginState.AUTHENTICATED or state == LoginState.LOGGED_IN:
         await on_verified(curr_user, db)
-        logged_in(curr_user, account)
+        login.logged_in(curr_user, account)
         ver = True
     elif state == LoginState.REQUIRE_2FA:
-        sessions[curr_user.id] = (account, (await trigger_2fa(account)))
+        sessions[curr_user.id] = (account, (await login.trigger_2fa(account)))
 
     return AppleAccountStatus(
         appleid=curr_user.appleid,
@@ -99,7 +99,7 @@ async def verfiy_2fa_code(
     # print(state)
     if state == LoginState.LOGGED_IN:
         on_verified(curr_user, db)
-        logged_in(curr_user, account)
+        login.logged_in(curr_user, account)
     else:
         raise InvalidCredentialsException()
     

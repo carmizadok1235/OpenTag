@@ -17,3 +17,6 @@ wheels/
 
 # accounts
 accounts/*
+
+# vscode counter
+.VSCodeCounter

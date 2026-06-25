@@ -14,6 +14,8 @@ from base64 import b64decode
 
 from app.security import hash_password
 
+from app.exceptions import InvalidBase64KeyException
+
 
 async def get_user_by_id(id: int, db: AsyncSession) -> User | None:
     result = await db.execute(
@@ -73,7 +75,11 @@ async def get_device_by_id(device_id: int, db: AsyncSession):
     return result.scalars().first()
 
 async def create_devcie(device_data: DeviceCreate, curr_user_id: int, db: AsyncSession):
-    
+    try: # check if the keys are valid base64
+        b64decode(device_data.private_key)
+        b64decode(device_data.symmetric_key)
+    except:
+        raise InvalidBase64KeyException()
 
     new_device = Device(
         user_id=curr_user_id,
