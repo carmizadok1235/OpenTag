@@ -11,12 +11,12 @@ from app.exceptions import JsonFileNotExistException, InvalidKeyException
 
 from app.config import settings
 
-async def fetch_report(
-    device: Device, 
+def _fetch_account_accessory_pair(
+    device: Device,
     json_file: str | None
-) -> LocationCoordinates | None:
+) -> tuple[AsyncAppleAccount, FindMyAccessory]:
     if json_file is None:
-        raise JsonFileNotExistException
+        raise JsonFileNotExistException()
     
     try:
         account = AsyncAppleAccount.from_json(
@@ -36,6 +36,17 @@ async def fetch_report(
     except:
         raise InvalidKeyException()
     
+    return (account, accessory)
+
+async def fetch_report(
+    device: Device, 
+    json_file: str | None
+) -> LocationCoordinates | None:
+    account, accessory = _fetch_account_accessory_pair(
+        device,
+        json_file
+    )
+    
     location = None
     try:
         location = await account.fetch_location(accessory)
@@ -45,8 +56,27 @@ async def fetch_report(
     if location is None:
         return None
 
-    return LocationCoordinates(
-        longitude=location.longitude,
-        latitude=location.latitude,
-        minutes_updated_ago=(datetime.now(UTC) - location.timestamp).seconds//60
+    return location
+    # return LocationCoordinates(
+    #     longitude=location.longitude,
+    #     latitude=location.latitude,
+    #     time_updated=location.timestamp
+    # )
+
+
+async def fetch_location_history(
+    device: Device,
+    json_file: str | None
+) -> list[LocationCoordinates] | None:
+    account, accessory = _fetch_account_accessory_pair(
+        device,
+        json_file
     )
+
+    locations = []
+    try:
+        locations = await account.fetch_location_history(accessory)
+    except Exception as e:
+        print(e)
+
+    return locations[-50:]

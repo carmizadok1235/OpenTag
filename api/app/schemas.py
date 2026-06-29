@@ -59,4 +59,4 @@ class AppleSubmit2faCode(BaseModel):
 class LocationCoordinates(BaseModel):
     longitude: float
     latitude: float
-    minutes_updated_ago: int
+    timestamp: datetime

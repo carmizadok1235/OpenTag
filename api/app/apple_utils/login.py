@@ -1,4 +1,3 @@
-# taken from https://github.com/malmeloo/FindMy.py/blob/main/examples
 
 
 from findmy import (

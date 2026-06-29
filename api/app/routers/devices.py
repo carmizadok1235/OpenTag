@@ -77,6 +77,27 @@ async def get_device_location(
     
     return location
 
+@router.get("/{device_id}/location_history", response_model=list[LocationCoordinates])
+async def get_device_location_history(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    locations = await reports.fetch_location_history(
+        device=device,
+        json_file=curr_user.json_account_file,
+    )
+    
+    return locations
+
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_device(
     device_id: int,
