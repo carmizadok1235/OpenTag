@@ -1,0 +1,116 @@
+from typing import Annotated
+
+from fastapi import APIRouter, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.database import get_db
+from app.security import CurrentUser
+
+import app.crud as crud
+from app.schemas import DeviceResponse, DeviceCreate, LocationCoordinates
+
+from app.apple_utils import reports
+
+from app.exceptions import (
+    DeviceNotFoundException,
+    InvalidTokenException,
+    FetchReportException
+)
+
+router = APIRouter()
+
+
+@router.post("", response_model=DeviceResponse, status_code=status.HTTP_201_CREATED)
+async def create_device(
+    device_data: DeviceCreate,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    return await crud.create_devcie(device_data, curr_user.id, db)
+
+
+@router.get("", response_model=list[DeviceResponse])
+async def get_devices(
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):  
+    return await crud.get_devices_of_user_id(curr_user.id, db)
+
+
+@router.get("/{device_id}", response_model=DeviceResponse)
+async def get_devices(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    return device
+
+@router.get("/{device_id}/location", response_model=LocationCoordinates)
+async def get_device_location(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    location = await reports.fetch_report(
+        device=device,
+        json_file=curr_user.json_account_file,
+    )
+    # print(location)
+    if location is None:
+        raise FetchReportException()
+    
+    return location
+
+@router.get("/{device_id}/location_history", response_model=list[LocationCoordinates])
+async def get_device_location_history(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    locations = await reports.fetch_location_history(
+        device=device,
+        json_file=curr_user.json_account_file,
+    )
+    
+    return locations
+
+@router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_device(
+    device_id: int,
+    curr_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    device = await crud.get_device_by_id(device_id, db)
+
+    if device is None:
+        raise DeviceNotFoundException()
+    
+    if curr_user.id != device.user_id:
+        raise InvalidTokenException()
+    
+    await db.delete(device)
+    await db.commit()

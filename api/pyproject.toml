@@ -1,0 +1,18 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi[standard]>=0.136.3",
+    "findmy>=0.10.1",
+    "pwdlib[argon2]>=0.3.0",
+    "pydantic-settings>=2.14.1",
+    "pyjwt>=2.13.0",
+    "sqlalchemy>=2.0.50",
+]
+
+[dependency-groups]
+dev = []

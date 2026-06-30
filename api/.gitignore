@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# dotenv
+.env
+
+# database
+*.db
+
+# accounts
+accounts/*
+
+# vscode counter
+.VSCodeCounter
