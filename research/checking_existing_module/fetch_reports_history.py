@@ -39,9 +39,8 @@ def fetch_reports(priv_key: str, symmetric_key: str) -> int:
         master_key=base64.b64decode(priv_key), 
         skn=base64.b64decode(symmetric_key), 
         sks=base64.b64decode(symmetric_key),
-        paired_at=datetime(2026, 5, 16, 20, 13, 17, tzinfo=timezone.utc)
+        paired_at=datetime(2026, 6, 25, 20, 38, 30, tzinfo=timezone.utc)
     )
-
     # print(accessory._primary_gen._get_keypair(1).private_key_b64)
     # for index, key in accessory.keys_between(
     #     datetime.now(tz=timezone.utc) - timedelta(minutes=35),
@@ -50,13 +49,18 @@ def fetch_reports(priv_key: str, symmetric_key: str) -> int:
     #     print(f"index {index}: {key.private_key_b64}")
 
     locations = acc.fetch_location_history(accessory)
+    # locations = acc.fetch_location_history()
+    
+    # locations = acc.fetch_location(accessory)
     
     print(len(locations))
     # Step 2: print it!
     print(locations)
-    print("Last known location:")
-    if locations:
-        print(f" - {locations[-1]}")
+    # print("Last known location:")
+    # if locations:
+    #     print(f" - {locations[-1]}")
+    for loc in locations:
+        print(loc.timestamp)
 
     # Step 3 (optional): We can save the location report to a file if we want.
     #                    BUT WATCH OUT! This file will contain the tag's private key!

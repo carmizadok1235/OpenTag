@@ -18,7 +18,7 @@ def _login_sync(account: AppleAccount) -> None:
     password = input("passwd? > ")
 
     state = account.login(email, password)
-
+    print(state)
     if state == LoginState.REQUIRE_2FA:  # Account requires 2FA
         # This only supports SMS methods for now
         methods = account.get_2fa_methods()
@@ -45,7 +45,7 @@ async def _login_async(account: AsyncAppleAccount) -> None:
     password = input("passwd? > ")
 
     state = await account.login(email, password)
-
+    print(state)
     if state == LoginState.REQUIRE_2FA:  # Account requires 2FA
         # This only supports SMS methods for now
         methods = await account.get_2fa_methods()
@@ -83,6 +83,8 @@ def get_account_sync(
         )
         acc = AppleAccount(ani)
         _login_sync(acc)
+        # res = acc.get_2fa_methods()
+        # print(res)
 
         acc.to_json(store_path)
 
