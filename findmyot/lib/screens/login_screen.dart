@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:findmyot/screens/main_screen.dart";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,13 +12,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(),
-      body: buildBody()
+      appBar: buildAppBar(context),
+      body: buildBody(context)
     );
   }
 }
 
-AppBar buildAppBar() {
+AppBar buildAppBar(BuildContext context) {
   return AppBar(
     title: Text(
       "Login",
@@ -30,7 +31,7 @@ AppBar buildAppBar() {
   );
 }
 
-Column buildBody() {
+Column buildBody(BuildContext context) {
   return Column(
     children: [
       Container(
@@ -88,7 +89,10 @@ Column buildBody() {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              // handle login
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
