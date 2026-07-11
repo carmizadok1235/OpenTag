@@ -2,6 +2,8 @@ import "package:flutter/material.dart";
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+const String MAP_API_KEY = String.fromEnvironment("MAP_API_KEY");
+
 class DevicesScreen extends StatefulWidget {
   const DevicesScreen({super.key});
 
@@ -12,64 +14,116 @@ class DevicesScreen extends StatefulWidget {
 class _DevicesScreenState extends State<DevicesScreen> {
   final MapController _mapController = MapController();
 
-  // Placeholder device locations — replace with your real device data
   final List<Map<String, dynamic>> _devices = [
-    {"name": "Device 1", "position": LatLng(32.0853, 34.7818)}, // Tel Aviv
-    {"name": "Device 2", "position": LatLng(32.1848, 34.8713)}, // Ra'anana
-    {"name": "Device 3", "position": LatLng(31.7683, 35.2137)}, // Jerusalem
-  ];
+    {"name": "Device 1", "position": LatLng(32.0853, 34.7818)},
+    {"name": "Device 2", "position": LatLng(32.1848, 34.8713)},
+    {"name": "Device 3", "position": LatLng(31.7683, 35.2137)},
+  ]; // need to change it, devices should be fetched via provider using service call for the api.
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Devices"),
-        centerTitle: true,
-      ),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: LatLng(32.0853, 34.7818), // starting point
-          initialZoom: 8,
-        ),
+      body: Stack(
         children: [
-          TileLayer(
-            urlTemplate: "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${String.fromEnvironment("MAP_API_KEY")}",
-            userAgentPackageName: "findmyot", 
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: LatLng(32.0853, 34.7818), // starting point
+              initialZoom: 8,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$MAP_API_KEY",
+                userAgentPackageName: "findmyot", 
+              ),
+            ],
           ),
-          MarkerLayer(
-            markers: _devices.map((device) {
-              return Marker(
-                point: device["position"],
-                width: 40,
-                height: 40,
-                child: GestureDetector(
-                  onTap: () {
-                    _showDeviceInfo(device["name"]);
-                  },
-                  child: const Icon(
-                    Icons.location_pin,
-                    color: Colors.blue,
-                    size: 40,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
+          _buildDraggableDeviceList()
         ],
-      ),
+      )
     );
   }
 
-  void _showDeviceInfo(String deviceName) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            deviceName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildDraggableDeviceList() {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.15,
+      minChildSize: 0.15,
+      maxChildSize: 0.8,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+              )
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Material(
+              color: Colors.transparent, // let the Container's white bg show through
+              child: CustomScrollView(
+                controller: scrollController,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 10),
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Devices",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle, color: Colors.blue, size: 28),
+                                onPressed: () {
+                                  // handle add device
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                      ],
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final device = _devices[index];
+                        return ListTile(
+                          leading: const Icon(Icons.devices, color: Colors.blue),
+                          title: Text(device["name"]),
+                          subtitle: const Text("Tap to view on map"),
+                          onTap: () {
+                            _mapController.move(device["position"], 14);
+                          },
+                        );
+                      },
+                      childCount: _devices.length,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },

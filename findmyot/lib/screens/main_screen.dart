@@ -1,3 +1,4 @@
+import 'package:findmyot/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import "package:findmyot/screens/devices_screen.dart";
 
@@ -12,7 +13,8 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    DevicesScreen()
+    DevicesScreen(),
+    ProfileScreen()
   ];
 
   void _onItemTapped(int index) {
@@ -32,16 +34,12 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Search",
+            icon: Icon(Icons.devices),
+            label: "Devices",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: "Profile",
+            label: "Me",
           ),
         ],
       ),
