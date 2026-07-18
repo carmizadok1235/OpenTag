@@ -5,5 +5,13 @@ class User {
   String username;
   String appleid;
 
-  User(this.id, this.username, this.appleid);
+  User({required this.id, required this.username, required this.appleid});
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json["id"] as int,
+      username: json["username"] as String,
+      appleid: json["appleid"] as String
+    );
+  }
 }

@@ -5,5 +5,5 @@ class Device {
   final String symmetric_key;
   final String private_key;
 
-  const Device(this.id, this.symmetric_key, this.private_key);
+  const Device({required this.id, required this.symmetric_key, required this.private_key});
 }

@@ -1,5 +1,7 @@
+import "package:findmyot/providers/auth_provider.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
+import "package:provider/provider.dart";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,6 +34,9 @@ AppBar buildAppBar(BuildContext context) {
 }
 
 Column buildBody(BuildContext context) {
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   return Column(
     children: [
       Container(
@@ -46,6 +51,7 @@ Column buildBody(BuildContext context) {
           ]
         ),
         child: TextField(
+          controller: usernameController,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -70,6 +76,7 @@ Column buildBody(BuildContext context) {
           ]
         ),
         child: TextField(
+          controller: passwordController,
           obscureText: true,
           decoration: InputDecoration(
             filled: true,
@@ -88,11 +95,18 @@ Column buildBody(BuildContext context) {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
+            onPressed: () async {
+              bool loggedIn = await context.read<AuthProvider>().login(
+                usernameController.text,
+                passwordController.text
               );
+
+              if (loggedIn){
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainScreen()),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
