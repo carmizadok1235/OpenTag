@@ -13,3 +13,18 @@ class Device {
     );
   }
 }
+
+class DeviceCreate {
+  final String symmetricKey;
+  final String privateKey;
+  final String timePaired;
+
+  const DeviceCreate({required this.symmetricKey, required this.privateKey, required this.timePaired});
+
+  // factory DeviceCreate.fromJson(Map<String, dynamic> json) {
+  //   return Device(
+  //     id: json["id"] as int,
+  //     timePaired: json["time_paired"] as String
+  //   );
+  // }
+}

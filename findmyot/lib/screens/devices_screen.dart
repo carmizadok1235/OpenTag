@@ -1,4 +1,6 @@
+import 'package:findmyot/models/device.dart';
 import 'package:findmyot/providers/devices_provider.dart';
+import 'package:findmyot/screens/add_device_dialog.dart';
 import "package:flutter/material.dart";
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -95,7 +97,15 @@ class _DevicesScreenState extends State<DevicesScreen> {
                               IconButton(
                                 icon: const Icon(Icons.add_circle, color: Colors.blue, size: 28),
                                 onPressed: () async {
-                                  await _devicesProvider.fetchDevices();
+                                  // await _devicesProvider.fetchDevices();
+                                  final DeviceCreate? device = await showDialog<DeviceCreate>(
+                                    context: context, 
+                                    builder: (context) => AddDeviceDialog()
+                                  );
+
+                                  if (await _devicesProvider.createDevice(device)) {
+                                    await _devicesProvider.fetchDevices();
+                                  }
                                   // handle add device
                                 },
                               ),

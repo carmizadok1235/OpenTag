@@ -40,7 +40,11 @@ class ApiService {
     ));
   }
 
-  ApiResult _handleError(DioExceptionType type){
+  ApiResult _handleError(DioExceptionType type, Response? res){
+    dynamic message = "";
+    if (res != null) {
+      message = res.data;
+    }
     switch (type) {
       case DioExceptionType.connectionError:
         return ApiResult.failure("Connection Error");
@@ -53,7 +57,7 @@ class ApiService {
       case DioExceptionType.badCertificate:
         return ApiResult.failure("Bad Certificate");
       case DioExceptionType.badResponse:
-        return ApiResult.failure("Bad Response");
+        return ApiResult.failure("Bad Response: $message");
       case DioExceptionType.cancel:
         return ApiResult.failure("Cancel");
       case DioExceptionType.unknown:
@@ -79,7 +83,7 @@ class ApiService {
         data: formData
       );
     } on DioException catch (e) {
-      return _handleError(e.type);
+      return _handleError(e.type, e.response);
     }
     // print(response.data);
     authToken = response.data["access_token"];
@@ -93,7 +97,7 @@ class ApiService {
         "/api/users/me"
       );
     } on DioException catch (e) {
-      return _handleError(e.type);
+      return _handleError(e.type, e.response);
     }
 
     return ApiResult.success(response.data);
@@ -107,7 +111,26 @@ class ApiService {
         "/api/devices"
       );
     } on DioException catch (e) {
-      return _handleError(e.type);
+      return _handleError(e.type, e.response);
+    }
+
+    return ApiResult.success(response.data);
+  }
+
+  Future<ApiResult> createDevice(DeviceCreate device) async {
+    Response? response;
+
+    try {
+      response = await _http.post(
+        "/api/devices",
+        data: {
+          "symmetric_key": device.symmetricKey,
+          "private_key": device.privateKey,
+          "time_paired": device.timePaired
+        }
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
     }
 
     return ApiResult.success(response.data);

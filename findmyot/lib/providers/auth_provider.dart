@@ -1,3 +1,4 @@
+import "package:findmyot/models/device.dart";
 import "package:findmyot/providers/useapi_provider.dart";
 import "package:findmyot/models/user.dart";
 import "package:findmyot/services/api_service.dart";
