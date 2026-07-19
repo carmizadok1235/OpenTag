@@ -1,4 +1,5 @@
 import "package:findmyot/providers/auth_provider.dart";
+import "package:findmyot/providers/devices_provider.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
 import "package:provider/provider.dart";
@@ -102,6 +103,7 @@ Column buildBody(BuildContext context) {
               );
 
               if (loggedIn){
+                await context.read<DevicesProvider>().fetchDevices();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const MainScreen()),

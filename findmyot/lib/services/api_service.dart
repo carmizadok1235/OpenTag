@@ -99,7 +99,17 @@ class ApiService {
     return ApiResult.success(response.data);
   }
 
-  Future<List<Device>> fetchDevices() async {
-    return [];
-  } 
+  Future<ApiResult> fetchDevices() async {
+    Response? response;
+
+    try {
+      response = await _http.get(
+        "/api/devices"
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type);
+    }
+
+    return ApiResult.success(response.data);
+  }
 }

@@ -1,6 +1,8 @@
+import 'package:findmyot/providers/devices_provider.dart';
 import "package:flutter/material.dart";
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 
 const String MAP_API_KEY = String.fromEnvironment("MAP_API_KEY");
 
@@ -14,11 +16,7 @@ class DevicesScreen extends StatefulWidget {
 class _DevicesScreenState extends State<DevicesScreen> {
   final MapController _mapController = MapController();
 
-  final List<Map<String, dynamic>> _devices = [
-    {"name": "Device 1", "position": LatLng(32.0853, 34.7818)},
-    {"name": "Device 2", "position": LatLng(32.1848, 34.8713)},
-    {"name": "Device 3", "position": LatLng(31.7683, 35.2137)},
-  ]; // need to change it, devices should be fetched via provider using service call for the api.
+  // need to change it, devices should be fetched via provider using service call for the api.
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +43,8 @@ class _DevicesScreenState extends State<DevicesScreen> {
   }
 
   Widget _buildDraggableDeviceList() {
+    final DevicesProvider _devicesProvider = context.watch<DevicesProvider>();
+    
     return DraggableScrollableSheet(
       initialChildSize: 0.15,
       minChildSize: 0.15,
@@ -94,7 +94,8 @@ class _DevicesScreenState extends State<DevicesScreen> {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.add_circle, color: Colors.blue, size: 28),
-                                onPressed: () {
+                                onPressed: () async {
+                                  await _devicesProvider.fetchDevices();
                                   // handle add device
                                 },
                               ),
@@ -108,17 +109,17 @@ class _DevicesScreenState extends State<DevicesScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final device = _devices[index];
+                        final device = _devicesProvider.devices[index];
                         return ListTile(
                           leading: const Icon(Icons.devices, color: Colors.blue),
-                          title: Text(device["name"]),
+                          title: Text(device.id.toString()),
                           subtitle: const Text("Tap to view on map"),
                           onTap: () {
-                            _mapController.move(device["position"], 14);
+                            // _mapController.move(device["position"], 14);
                           },
                         );
                       },
-                      childCount: _devices.length,
+                      childCount: _devicesProvider.devices.length,
                     ),
                   ),
                 ],
