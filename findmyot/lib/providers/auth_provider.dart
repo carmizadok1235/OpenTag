@@ -1,4 +1,3 @@
-import "package:findmyot/models/device.dart";
 import "package:findmyot/providers/useapi_provider.dart";
 import "package:findmyot/models/user.dart";
 import "package:findmyot/services/api_service.dart";
@@ -15,23 +14,23 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
   //   _user = newUser;
   //   notifyListeners();
   // }
-  Future<bool> login(String username, String password) async {
+  Future<Result> login(String username, String password) async {
 
     ApiResult result = await apiService.loginForToken(username, password);
     if (!result.success){
-      print(result.error);
-      return false;
+      // print(result.error);
+      return Result.error(error: result.error);
     }
     _authToken = result.data["access_token"];
     
     result = await apiService.getCurrentUser();
     if (!result.success) {
-      print(result.error);
-      return false;
+      // print(result.error);
+      return Result.error(error: result.error);
     }
 
     _user = User.fromJson(result.data);
 
-    return true;
+    return Result.success();
   }
 }

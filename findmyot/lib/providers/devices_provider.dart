@@ -28,17 +28,17 @@ class DevicesProvider extends UseapiProvider with ChangeNotifier{
     notifyListeners();
   }
 
-  Future<bool> createDevice(DeviceCreate? device) async {
+  Future<Result> createDevice(DeviceCreate? device) async {
     print(device);
     if (device == null) {
-      return false;
+      return Result.error(error: "Device is null");
     }
-    ApiResult result = await apiService.createDevice(device!);
+    ApiResult result = await apiService.createDevice(device);
     if (!result.success) {
-      print(result.error);
-      return false;
+      // print(result.error);
+      return Result.error(error: result.error);
     }
 
-    return true;
+    return Result.success();
   }
 }

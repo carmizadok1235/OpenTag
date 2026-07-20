@@ -1,5 +1,7 @@
 import "package:findmyot/providers/auth_provider.dart";
 import "package:findmyot/providers/devices_provider.dart";
+import "package:findmyot/providers/useapi_provider.dart";
+import "package:findmyot/widgets/error_dialog.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
 import "package:provider/provider.dart";
@@ -97,16 +99,21 @@ Column buildBody(BuildContext context) {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () async {
-              bool loggedIn = await context.read<AuthProvider>().login(
+              Result res = await context.read<AuthProvider>().login(
                 usernameController.text,
                 passwordController.text
               );
 
-              if (loggedIn){
+              if (res.success){
                 await context.read<DevicesProvider>().fetchDevices();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const MainScreen()),
+                );
+              } else {
+                showDialog(
+                  context: context, 
+                  builder: ((context) => ErrorDialog(message: res.error!))
                 );
               }
             },

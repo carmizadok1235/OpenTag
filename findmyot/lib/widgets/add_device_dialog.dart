@@ -13,6 +13,8 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
   final TextEditingController _privateKeyController = TextEditingController();
   final TextEditingController _timeCreatedController = TextEditingController();
 
+  String? _errorText;
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +28,22 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
     _privateKeyController.dispose();
     _timeCreatedController.dispose();
     super.dispose();
+  }
+
+  void _handleAddDevice() {
+    if (_symmetricKeyController.text.trim().isEmpty 
+    || _privateKeyController.text.trim().isEmpty) {
+      setState(() {
+        _errorText = "Keys cannot be empty";
+      });
+      return;
+    }
+    final DeviceCreate newDevice = DeviceCreate(
+      symmetricKey: _symmetricKeyController.text.trim(),
+      privateKey:  _privateKeyController.text.trim(),
+      timePaired: _timeCreatedController.text.trim()
+    );
+    Navigator.pop(context, newDevice);
   }
 
   @override
@@ -71,6 +89,16 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
                 ),
               ),
             ),
+            if (_errorText != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorText!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 13
+                )
+              )
+            ]
           ],
         ),
       ),
@@ -88,14 +116,7 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          onPressed: () {
-            final DeviceCreate newDevice = DeviceCreate(
-              symmetricKey: _symmetricKeyController.text,
-              privateKey:  _privateKeyController.text,
-              timePaired: _timeCreatedController.text
-            );
-            Navigator.pop(context, newDevice); // close and return data
-          },
+          onPressed: _handleAddDevice,
           child: const Text("Add", style: TextStyle(color: Colors.white)),
         ),
       ],

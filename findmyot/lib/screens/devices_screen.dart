@@ -1,6 +1,8 @@
 import 'package:findmyot/models/device.dart';
 import 'package:findmyot/providers/devices_provider.dart';
-import 'package:findmyot/screens/add_device_dialog.dart';
+import 'package:findmyot/providers/useapi_provider.dart';
+import 'package:findmyot/widgets/add_device_dialog.dart';
+import 'package:findmyot/widgets/error_dialog.dart';
 import "package:flutter/material.dart";
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -103,8 +105,14 @@ class _DevicesScreenState extends State<DevicesScreen> {
                                     builder: (context) => AddDeviceDialog()
                                   );
 
-                                  if (await _devicesProvider.createDevice(device)) {
+                                  Result res = await _devicesProvider.createDevice(device);
+                                  if (res.success) {
                                     await _devicesProvider.fetchDevices();
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => ErrorDialog(message: res.error!)
+                                    );
                                   }
                                   // handle add device
                                 },
