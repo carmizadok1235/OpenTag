@@ -1,31 +1,39 @@
 import 'package:flutter/material.dart';
 
 
-class ErrorDialog extends StatelessWidget {
+enum DialogStatus { success, error }
+
+class StatusDialog extends StatelessWidget {
+  final DialogStatus status;
   final String title;
   final String message;
 
-  const ErrorDialog({
+  const StatusDialog({
     super.key,
-    this.title = "Error",
+    required this.status,
+    required this.title,
     required this.message,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSuccess = status == DialogStatus.success;
+    final Color accentColor = isSuccess ? Colors.green : Colors.red;
+    final IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
       title: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 28),
+          Icon(icon, color: accentColor, size: 28),
           const SizedBox(width: 10),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.red,
+              color: accentColor,
             ),
           ),
         ],
@@ -48,4 +56,21 @@ class ErrorDialog extends StatelessWidget {
       ],
     );
   }
+}
+
+
+void showStatusDialog(
+  BuildContext context, {
+  required DialogStatus status,
+  required String message,
+  String? title,
+}) {
+  showDialog(
+    context: context,
+    builder: (context) => StatusDialog(
+      status: status,
+      title: title ?? (status == DialogStatus.success ? "Success" : "Error"),
+      message: message,
+    ),
+  );
 }

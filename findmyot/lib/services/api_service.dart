@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:findmyot/models/device.dart';
+import 'package:findmyot/models/user.dart';
 
 const String BASE_URL = String.fromEnvironment("API_URL");
 
@@ -95,6 +96,26 @@ class ApiService {
     try {
       response = await _http.get(
         "/api/users/me"
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
+    }
+
+    return ApiResult.success(response.data);
+  }
+
+  Future<ApiResult> createUser(UserCreate user) async {
+    Response? response;
+
+    try {
+      response = await _http.post(
+        "/api/users",
+        data: {
+          "username": user.username,
+          "password": user.password,
+          "appleid": user.appleid,
+          "apple_password": user.appleidPassword
+        }
       );
     } on DioException catch (e) {
       return _handleError(e.type, e.response);

@@ -1,7 +1,10 @@
+import "package:findmyot/models/user.dart";
 import "package:findmyot/providers/auth_provider.dart";
 import "package:findmyot/providers/devices_provider.dart";
 import "package:findmyot/providers/useapi_provider.dart";
-import "package:findmyot/widgets/error_dialog.dart";
+// import "package:findmyot/widgets/error_dialog.dart";
+import "package:findmyot/widgets/signup_dialog.dart";
+import "package:findmyot/widgets/status_dialog.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
 import "package:provider/provider.dart";
@@ -111,9 +114,14 @@ Column buildBody(BuildContext context) {
                   MaterialPageRoute(builder: (context) => const MainScreen()),
                 );
               } else {
-                showDialog(
-                  context: context, 
-                  builder: ((context) => ErrorDialog(message: res.error!))
+                // showDialog(
+                //   context: context, 
+                //   builder: ((context) => ErrorDialog(message: res.error!))
+                // );
+                showStatusDialog(
+                  context, 
+                  status: DialogStatus.error, 
+                  message: res.error!
                 );
               }
             },
@@ -138,8 +146,27 @@ Column buildBody(BuildContext context) {
       Container(
         margin: EdgeInsets.only(top: 10),
         child: TextButton(
-          onPressed: () {
+          onPressed: () async {
             // handle sign up navigation
+            final UserCreate? newUser = await showDialog<UserCreate>(
+              context: context,
+              builder: (context) => SignUpDialog()
+            );
+
+            Result res = await context.read<AuthProvider>().signUp(newUser);
+            if (res.success) {
+              showStatusDialog(
+                context, 
+                status: DialogStatus.success, 
+                message: "User Created Successfully"
+              );
+            } else {
+              showStatusDialog(
+                context,
+                status: DialogStatus.error, 
+                message: res.error!
+              );
+            }
           },
           child: Text(
             "Sign Up",

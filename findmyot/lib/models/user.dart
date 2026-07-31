@@ -15,3 +15,13 @@ class User {
     );
   }
 }
+
+
+class UserCreate {
+  final String username;
+  final String password;
+  final String appleid;
+  final String appleidPassword;
+
+  UserCreate({required this.username, required this.password, required this.appleid, required this.appleidPassword});
+}

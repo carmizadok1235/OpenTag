@@ -17,7 +17,7 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
   Future<Result> login(String username, String password) async {
 
     ApiResult result = await apiService.loginForToken(username, password);
-    if (!result.success){
+    if (!result.success) {
       // print(result.error);
       return Result.error(error: result.error);
     }
@@ -30,6 +30,20 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
     }
 
     _user = User.fromJson(result.data);
+
+    return Result.success();
+  }
+
+  Future<Result> signUp(UserCreate? user) async {
+    
+    if (user == null){
+      return Result.error(error: "User is null");
+    }
+
+    ApiResult result = await apiService.createUser(user);
+    if (!result.success) {
+      return Result.error(error: result.error);
+    }
 
     return Result.success();
   }
