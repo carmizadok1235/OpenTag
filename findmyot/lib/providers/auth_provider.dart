@@ -10,10 +10,18 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
 
   AuthProvider({required super.apiService});
   
+  User? get user => _user;
   // set user(User newUser) {
   //   _user = newUser;
   //   notifyListeners();
   // }
+
+  Future<void> refreshUser() async {
+    ApiResult result = await apiService.getCurrentUser();
+    _user = User.fromJson(result.data);
+    notifyListeners();
+  }
+
   Future<Result> login(String username, String password) async {
 
     ApiResult result = await apiService.loginForToken(username, password);
@@ -41,6 +49,26 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
     }
 
     ApiResult result = await apiService.createUser(user);
+    if (!result.success) {
+      return Result.error(error: result.error);
+    }
+
+    return Result.success();
+  }
+
+  Future<Result> updateProfile(
+    int userId,
+    String username, 
+    String appleId, 
+    String appleIdPassword
+  ) async {
+    ApiResult result = await apiService.updateUser(
+      userId,
+      username != "" ? username : null, 
+      appleId != "" ? appleId : null, 
+      appleIdPassword != "" ? appleIdPassword : null
+    );
+
     if (!result.success) {
       return Result.error(error: result.error);
     }

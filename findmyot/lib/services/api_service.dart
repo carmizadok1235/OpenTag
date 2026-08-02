@@ -124,6 +124,37 @@ class ApiService {
     return ApiResult.success(response.data);
   }
 
+  Future<ApiResult> updateUser(
+    int userId,
+    String? username,
+    String? appleId,
+    String? appleIdPassword
+  ) async {
+    Response? response;
+    Map data = {};
+
+    if (username != null){
+      data.addAll({"username": username});
+    }
+    if (appleId != null){
+      data.addAll({"appleid": appleId});
+    }
+    if (appleIdPassword != null){
+      data.addAll({"apple_password": appleIdPassword});
+    }
+
+    try {
+      response = await _http.patch(
+        "/api/users/$userId",
+        data: data
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
+    }
+
+    return ApiResult.success(response.data);
+  }
+
   Future<ApiResult> fetchDevices() async {
     Response? response;
 

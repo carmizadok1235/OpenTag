@@ -138,7 +138,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                           leading: const Icon(Icons.devices, color: Colors.blue),
                           title: Text(device.id.toString()),
                           subtitle: const Text("Tap to view on map"),
-                          onTap: () {
+                          onTap: () { // when pressing a device
                             // _mapController.move(device["position"], 14);
                           },
                         );

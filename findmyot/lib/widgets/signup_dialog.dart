@@ -111,7 +111,7 @@ class _SignUpDialogState extends State<SignUpDialog> {
               controller: _appleidController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: "Email",
+                labelText: "Apple ID",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -122,7 +122,7 @@ class _SignUpDialogState extends State<SignUpDialog> {
               controller: _appleidPasswordController,
               obscureText: _obscureEmailPassword,
               decoration: InputDecoration(
-                labelText: "Email Password",
+                labelText: "Apple ID Password",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
