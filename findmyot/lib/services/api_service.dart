@@ -1,18 +1,19 @@
 import 'package:dio/dio.dart';
 import 'package:findmyot/models/device.dart';
 import 'package:findmyot/models/user.dart';
+import 'package:findmyot/models/result.dart';
 
 const String BASE_URL = String.fromEnvironment("API_URL");
 
-class ApiResult<T> {
-  T? data;
-  String? error;
+// class ApiResult<T> {
+//   T? data;
+//   String? error;
 
-  bool get success => error == null;
+//   bool get success => error == null;
 
-  ApiResult.success(this.data);
-  ApiResult.failure(this.error);
-}
+//   ApiResult.success(this.data);
+//   ApiResult.failure({required this.error});
+// }
 
 class ApiService {
   final Dio _http = Dio(BaseOptions(
@@ -41,34 +42,34 @@ class ApiService {
     ));
   }
 
-  ApiResult _handleError(DioExceptionType type, Response? res){
+  Result _handleError(DioExceptionType type, Response? res){
     dynamic message = "";
     if (res != null) {
       message = res.data;
     }
     switch (type) {
       case DioExceptionType.connectionError:
-        return ApiResult.failure("Connection Error");
+        return Result.failure(error: "Connection Error");
       case DioExceptionType.connectionTimeout:
-        return ApiResult.failure("Connection timeout");
+        return Result.failure(error: "Connection timeout");
       case DioExceptionType.sendTimeout:
-        return ApiResult.failure("Send Timeout");
+        return Result.failure(error: "Send Timeout");
       case DioExceptionType.receiveTimeout:
-        return ApiResult.failure("Receive Timeout");
+        return Result.failure(error: "Receive Timeout");
       case DioExceptionType.badCertificate:
-        return ApiResult.failure("Bad Certificate");
+        return Result.failure(error: "Bad Certificate");
       case DioExceptionType.badResponse:
-        return ApiResult.failure("Bad Response: $message");
+        return Result.failure(error: "Bad Response: $message");
       case DioExceptionType.cancel:
-        return ApiResult.failure("Cancel");
+        return Result.failure(error: "Cancel");
       case DioExceptionType.unknown:
-        return ApiResult.failure("Unknown");
+        return Result.failure(error: "Unknown");
       case DioExceptionType.transformTimeout:
-        return ApiResult.failure("Transform Timeout");
+        return Result.failure(error: "Transform Timeout");
     }
   } 
 
-  Future<ApiResult> loginForToken(String username, String password) async {
+  Future<Result> loginForToken(String username, String password) async {
     String url = _http.options.baseUrl;
     print("attempting login with $username and $password at $url");
     // do form data not json data
@@ -88,10 +89,10 @@ class ApiService {
     }
     // print(response.data);
     authToken = response.data["access_token"];
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
   }
   
-  Future<ApiResult> getCurrentUser() async {
+  Future<Result> getCurrentUser() async {
     Response? response;
     try {
       response = await _http.get(
@@ -101,10 +102,10 @@ class ApiService {
       return _handleError(e.type, e.response);
     }
 
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
   }
 
-  Future<ApiResult> createUser(UserCreate user) async {
+  Future<Result> createUser(UserCreate user) async {
     Response? response;
 
     try {
@@ -121,10 +122,10 @@ class ApiService {
       return _handleError(e.type, e.response);
     }
 
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
   }
 
-  Future<ApiResult> updateUser(
+  Future<Result> updateUser(
     int userId,
     String? username,
     String? appleId,
@@ -152,10 +153,10 @@ class ApiService {
       return _handleError(e.type, e.response);
     }
 
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
   }
 
-  Future<ApiResult> fetchDevices() async {
+  Future<Result> fetchDevices() async {
     Response? response;
 
     try {
@@ -166,10 +167,10 @@ class ApiService {
       return _handleError(e.type, e.response);
     }
 
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
   }
 
-  Future<ApiResult> createDevice(DeviceCreate device) async {
+  Future<Result> createDevice(DeviceCreate device) async {
     Response? response;
 
     try {
@@ -185,6 +186,37 @@ class ApiService {
       return _handleError(e.type, e.response);
     }
 
-    return ApiResult.success(response.data);
+    return Result.success(response.data);
+  }
+
+  Future<Result> validateAppleId() async {
+    Response? response;
+
+    try {
+      response = await _http.get(
+        "/api/apple/login"
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
+    }
+
+    return Result.success(response.data);
+  }
+
+  Future<Result> verifiyCode(String code) async {
+    Response? response;
+
+    try {
+      response = await _http.post(
+        "/api/apple/verify2fa",
+        data: {
+          "code": code
+        }
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
+    }
+
+    return Result.success(response.data);
   }
 }

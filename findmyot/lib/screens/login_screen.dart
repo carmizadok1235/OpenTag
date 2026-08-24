@@ -8,6 +8,8 @@ import "package:findmyot/widgets/status_dialog.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
 import "package:provider/provider.dart";
+import 'package:findmyot/models/result.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

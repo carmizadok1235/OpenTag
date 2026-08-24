@@ -2,6 +2,7 @@ import "package:findmyot/models/device.dart";
 import "package:findmyot/providers/useapi_provider.dart";
 import "package:findmyot/services/api_service.dart";
 import "package:flutter/material.dart";
+import 'package:findmyot/models/result.dart';
 
 
 class DevicesProvider extends UseapiProvider with ChangeNotifier{
@@ -14,7 +15,7 @@ class DevicesProvider extends UseapiProvider with ChangeNotifier{
   List<Device> get devices => _devices;
 
   Future<void> fetchDevices() async {
-    ApiResult result = await apiService.fetchDevices();
+    Result result = await apiService.fetchDevices();
     if (!result.success) {
       print(result.error);
       return;
@@ -31,14 +32,14 @@ class DevicesProvider extends UseapiProvider with ChangeNotifier{
   Future<Result> createDevice(DeviceCreate? device) async {
     print(device);
     if (device == null) {
-      return Result.error(error: "Device is null");
+      return Result.failure(error: "Device is null");
     }
-    ApiResult result = await apiService.createDevice(device);
+    Result result = await apiService.createDevice(device);
     if (!result.success) {
       // print(result.error);
-      return Result.error(error: result.error);
+      return Result.failure(error: result.error);
     }
 
-    return Result.success();
+    return Result.success(null);
   }
 }

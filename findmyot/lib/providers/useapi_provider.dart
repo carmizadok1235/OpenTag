@@ -1,13 +1,13 @@
 import 'package:findmyot/services/api_service.dart';
 
-class Result {
-  String? error;
+// class Result {
+//   String? error;
 
-  bool get success => error == null;
+//   bool get success => error == null;
 
-  Result.success();
-  Result.error({required this.error});
-}
+//   Result.success();
+//   Result.error({required this.error});
+// }
 
 abstract class UseapiProvider {
   final ApiService apiService;

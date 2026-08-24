@@ -2,9 +2,13 @@ import 'package:findmyot/models/user.dart';
 import 'package:findmyot/providers/auth_provider.dart';
 import 'package:findmyot/providers/devices_provider.dart';
 import 'package:findmyot/providers/useapi_provider.dart';
+import 'package:findmyot/utils/apple.dart';
 import 'package:findmyot/widgets/status_dialog.dart';
+import 'package:findmyot/widgets/two_factor_auth_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:findmyot/models/result.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -180,6 +184,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: const Text(
                     "Save",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(left: 30, right: 30, top: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Result<AppleLoginState> res = await authProvider.validateAppleCredentials();
+                    // print(res.data);
+                    checkAppleLoginState(context, res);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Text(
+                    "Validate Apple Account",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
