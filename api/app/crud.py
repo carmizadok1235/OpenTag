@@ -45,9 +45,12 @@ async def get_devices_of_user_id(user_id: int, db: AsyncSession) -> list[Device]
 async def update_user(user: User, user_data: UserUpdate, db: AsyncSession):
     # for f, v in user_data.model_dump(exclude_unset=True).items():
     #     setattr(user, f, v.lower() if isinstance(v, str) else v)
-    user.username = user_data.username.lower()
-    user.appleid = user_data.appleid.lower()
-    user.apple_password = user_data.apple_password
+    if user.username is not None:
+        user.username = user_data.username.lower()
+    if user.appleid is not None:
+        user.appleid = user_data.appleid.lower()
+    if user.apple_password is not None:
+        user.apple_password = user_data.apple_password
 
     await db.commit()
     await db.refresh(user)
