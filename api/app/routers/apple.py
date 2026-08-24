@@ -98,7 +98,7 @@ async def verfiy_2fa_code(
     
     # print(state)
     if state == LoginState.LOGGED_IN:
-        on_verified(curr_user, db)
+        await on_verified(curr_user, db)
         login.logged_in(curr_user, account)
     else:
         raise InvalidCredentialsException()
