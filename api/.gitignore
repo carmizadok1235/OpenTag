@@ -20,3 +20,6 @@ accounts/*
 
 # vscode counter
 .VSCodeCounter
+
+# log
+*.log
