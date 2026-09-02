@@ -83,10 +83,11 @@ class _TwoFactorDialogState extends State<TwoFactorDialog> {
     });
 
     try {
-      print("code is $_code");
+      // print("code is $_code");
       await widget.onVerify(_code);
       // onVerify should pop the dialog on success
     } catch (e) {
+      // print("----------------------------------------------\n$e");
       setState(() {
         _errorMessage = 'Incorrect code. Try again.';
         _isLoading = false;

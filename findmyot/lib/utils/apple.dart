@@ -39,11 +39,17 @@ void checkAppleLoginState(BuildContext context, Result<AppleLoginState> res) asy
           context: context, 
           builder: (context) => TwoFactorDialog(
             onVerify: (code) async {
-              Result<AppleLoginState> res = await context.watch<AuthProvider>().verifyTwoFactorAuthCode(code);
+              Result<AppleLoginState> res = await context.read<AuthProvider>().verifyTwoFactorAuthCode(code);
+              // print("I am in verify function aaaaaa");
               if (res.success){
-                print("login state is ${res.data}");
+                // print("login state is ${res.data}");
               }
-              checkAppleLoginState(context, res);
+
+              try{
+                checkAppleLoginState(context, res);
+              } catch (e) {
+                rethrow;
+              }
             },
           )
         );

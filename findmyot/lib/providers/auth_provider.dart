@@ -92,11 +92,11 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
 
   Future<Result<AppleLoginState>> verifyTwoFactorAuthCode(String code) async {
     Result result = await apiService.verifiyCode(code);
-    if (result.success){
-      print("api response data is ${result.data}");
-    } else {
-      print("api error is ${result.error}");
-    }
+    // if (result.success){
+    //   print("api response data is ${result.data}");
+    // } else {
+    //   print("api error is ${result.error}");
+    // }
     return handleAppleVerificationResult(result);
   }
 }
