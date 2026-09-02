@@ -17,8 +17,14 @@ from app.schemas import UserUpdatePrivate
 
 from findmy import LoginState, AsyncAppleAccount
 from findmy.reports.twofactor import AsyncSecondFactorMethod
+from findmy.errors import InvalidCredentialsError, InvalidStateError
 
-from app.exceptions import InvalidCredentialsException, InvalidVerificationCodeException, TwoFactorAuthNotTriggeredException
+from app.exceptions import (
+    InvalidCredentialsException,
+    InvalidVerificationCodeException, 
+    TwoFactorAuthNotTriggeredException,
+    AlreadyLoggedInException
+)
 
 from app.database.models import User
 from app.database.database import get_db
@@ -38,6 +44,7 @@ def get_sessions(request: Request) -> dict:
     return request.app.state.sessions
 
 async def on_verified(user: User, db: AsyncSession):
+    # print("updating database")
     await crud.update_user(
             user,
             UserUpdatePrivate(json_account_file=user.build_json_file_name()),
@@ -59,8 +66,11 @@ async def login_to_apple_account(
     try:
         state = await login.login_async(account, curr_user)
         # print(f"State is {state}")
-    except:
+    except InvalidCredentialsError:
         raise InvalidCredentialsException()
+    except InvalidStateError:
+        raise AlreadyLoggedInException()
+
     
     ver = False
     if state == LoginState.AUTHENTICATED or state == LoginState.LOGGED_IN:
@@ -97,7 +107,7 @@ async def verfiy_2fa_code(
         raise InvalidVerificationCodeException()
     
     # print(state)
-    if state == LoginState.LOGGED_IN:
+    if state == LoginState.LOGGED_IN or state == LoginState.AUTHENTICATED:
         await on_verified(curr_user, db)
         login.logged_in(curr_user, account)
     else:

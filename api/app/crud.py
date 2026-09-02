@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas import (
     UserUpdate,
+    UserUpdatePrivate,
     UserCreate,
     DeviceCreate
 )
@@ -51,6 +52,8 @@ async def update_user(user: User, user_data: UserUpdate, db: AsyncSession):
         user.appleid = user_data.appleid.lower()
     if user_data.apple_password is not None:
         user.apple_password = user_data.apple_password
+    if isinstance(user_data, UserUpdatePrivate) and user_data.json_account_file is not None:
+        user.json_account_file = user_data.json_account_file
 
     await db.commit()
     await db.refresh(user)

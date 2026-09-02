@@ -53,6 +53,13 @@ class NoSmsTwoFactorMethodAuthException(HTTPException):
             detail="sms second factor method is not available"
         )
 
+class AlreadyLoggedInException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="already logged in."
+        )
+
 class _AppleAccountLoginException(HTTPException):
     def __init__(self, detail: str):
         super().__init__(
