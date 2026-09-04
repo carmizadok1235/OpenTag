@@ -14,7 +14,7 @@ from app.security import (
     CurrentUser
 )
 
-import os
+from pathlib import Path
 
 from app.database import models
 from app.database.database import get_db
@@ -106,7 +106,9 @@ async def delete_user(
         raise InvalidTokenException()
     
     if user.json_account_file is not None:
-        os.remove(user.json_account_path)
+        p = Path(user.json_account_path)
+        if p.relative_to(settings.account_store_path):
+            p.unlink()
     
     await db.delete(user)
     await db.commit()
