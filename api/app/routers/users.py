@@ -32,7 +32,8 @@ from app.exceptions import (
     AlreadyExistException,
     IncorrectDetailsException,
     UserNotFoundException,
-    InvalidTokenException
+    InvalidTokenException,
+    UnexpectedServerError
 )
 
 router = APIRouter()
@@ -106,9 +107,14 @@ async def delete_user(
         raise InvalidTokenException()
     
     if user.json_account_file is not None:
-        p = Path(user.json_account_path)
-        if p.relative_to(settings.account_store_path):
-            p.unlink()
+        try:
+            p = Path(user.json_account_path)
+            if p.relative_to(settings.account_store_path):
+                p.unlink()
+        except Exception as e:
+            import logging
+            logging.debug(e)
+            raise UnexpectedServerError("Failed to delete account json file.")
     
     await db.delete(user)
     await db.commit()
