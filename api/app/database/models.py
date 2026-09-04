@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.database import Base
 
+from app.config import settings
 
 class User(Base):
     __tablename__ = "users"
@@ -22,7 +23,7 @@ class User(Base):
     def json_account_path(self) -> str | None:
         if self.json_account_file is None:
             return None
-        return f"./accounts/{self.json_account_file}"
+        return f"{settings.account_store_path}/{self.json_account_file}"
     
     def build_json_file_name(self) -> str:
         return f"account{self.id}.json"

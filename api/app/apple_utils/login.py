@@ -61,7 +61,7 @@ async def get_account_async(
     """Tries to restore a saved Apple account, or prompts the user for login otherwise. (async)"""
     try:
         acc = AsyncAppleAccount.from_json(
-            settings.account_store_path.joinpath(user.build_json_file_name()),
+            settings.account_store_path.joinpath(user.json_account_file),
             anisette_libs_path=settings.anisette_libs_path
         )
     except FileNotFoundError:
