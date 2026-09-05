@@ -40,7 +40,8 @@ def log(req_body, res_body) -> None:
 
 # app = FastAPI()
 app = FastAPI(lifespan=lifespan)
-logging.basicConfig(filename="trace.log",level=logging.DEBUG)
+logging.getLogger("watchfiles.main").setLevel(logging.ERROR)
+logging.basicConfig(filename="trace.log",level=logging.INFO)
 # app.mount("/media", StaticFiles(directory="media"), name="media")
 
 app.include_router(users.router, prefix="/api/users", tags=["users"])
