@@ -23,11 +23,13 @@ void checkAppleLoginState(BuildContext context, Result<AppleLoginState> res) asy
 
   switch (res.data!) {
     case AppleLoginState.VERIFIED:
+      context.read<AuthProvider>().appleAccountVerified = true;
       if (insideDialog){
         Navigator.of(context).pop();
-      } else {
-        print("not dialog");
       }
+      // } else {
+      //   print("not dialog");
+      // }
       // showStatusDialog(
       //   context, 
       //   status: DialogStatus.success, 
@@ -41,9 +43,9 @@ void checkAppleLoginState(BuildContext context, Result<AppleLoginState> res) asy
             onVerify: (code) async {
               Result<AppleLoginState> res = await context.read<AuthProvider>().verifyTwoFactorAuthCode(code);
               // print("I am in verify function aaaaaa");
-              if (res.success){
+              // if (res.success){
                 // print("login state is ${res.data}");
-              }
+              // }
 
               try{
                 checkAppleLoginState(context, res);

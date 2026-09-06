@@ -116,12 +116,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              "Devices: ${devicesProvider.devices.length}",
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  authProvider.appleAccountVerified ? "Verified" : "Not Verified",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: authProvider.appleAccountVerified ? Colors.green : Colors.red
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    "|",
+                    style: TextStyle(fontSize: 15, color: Colors.grey[400]),
+                  ),
+                ),
+                Text(
+                  "Devices: ${devicesProvider.devices.length}",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
             _buildField(
               controller: _usernameController,

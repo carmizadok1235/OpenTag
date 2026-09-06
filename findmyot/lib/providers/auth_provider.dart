@@ -19,10 +19,18 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
   AuthProvider({required super.apiService});
   
   User? get user => _user;
+
   // set user(User newUser) {
   //   _user = newUser;
   //   notifyListeners();
   // }
+
+  bool get appleAccountVerified => _appleAccountVerified;
+
+  set appleAccountVerified(bool verified) {
+    _appleAccountVerified = verified;
+    notifyListeners();
+  }
 
   Future<void> refreshUser() async {
     Result result = await apiService.getCurrentUser();

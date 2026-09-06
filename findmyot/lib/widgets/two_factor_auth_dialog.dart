@@ -115,97 +115,109 @@ class _TwoFactorDialogState extends State<TwoFactorDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
 
-            // Icon
-            Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.shield_outlined, color: Colors.blue, size: 26),
-            ),
-            SizedBox(height: 16),
+                // Icon
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.shield_outlined, color: Colors.blue, size: 26),
+                ),
+                SizedBox(height: 16),
 
-            // Title
-            Text(
-              'Two-factor authentication',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 6),
+                // Title
+                Text(
+                  'Two-factor authentication',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                ),
+                SizedBox(height: 6),
 
-            // Subtitle
-            Text(
-              'Enter the 6-digit code from\nyour authenticator app.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.5),
-            ),
-            SizedBox(height: 24),
+                // Subtitle
+                Text(
+                  'Enter the 6-digit code from\nyour authenticator app.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.5),
+                ),
+                SizedBox(height: 24),
 
-            // 6 digit boxes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(6, (index) => _DigitBox(
-                controller: _controllers[index],
-                focusNode: _focusNodes[index],
-                hasError: _errorMessage != null,
-                onChanged: (val) => _onDigitEntered(val, index),
-                onBackspace: () => _onBackspace(index),
-              )),
-            ),
-            SizedBox(height: 8),
+                // 6 digit boxes
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(6, (index) => _DigitBox(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    hasError: _errorMessage != null,
+                    onChanged: (val) => _onDigitEntered(val, index),
+                    onBackspace: () => _onBackspace(index),
+                  )),
+                ),
+                SizedBox(height: 8),
 
-            // Error message
-            if (_errorMessage != null)
-              Text(
-                _errorMessage!,
-                style: TextStyle(fontSize: 12, color: Colors.red),
-              ),
-            SizedBox(height: 16),
+                // Error message
+                if (_errorMessage != null)
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                SizedBox(height: 16),
 
-            // Verify button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isComplete && !_isLoading ? _verify : null,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                // Verify button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isComplete && !_isLoading ? _verify : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white,
+                            ),
+                          )
+                        : Text('Verify'),
                   ),
                 ),
-                child: _isLoading
-                    ? SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white,
-                        ),
-                      )
-                    : Text('Verify'),
-              ),
-            ),
-            SizedBox(height: 12),
+                SizedBox(height: 12),
 
-            // Resend button
-            TextButton(
-              onPressed: _resendCountdown == 0 ? () {
-                _startResendTimer();
-                // call your resend API here
-              } : null,
-              child: Text(
-                _resendCountdown > 0
-                    ? 'Resend in ${_resendCountdown}s'
-                    : "Didn't receive a code? Resend",
-                style: TextStyle(fontSize: 13),
-              ),
-            ),
+                // Resend button
+                TextButton(
+                  onPressed: _resendCountdown == 0 ? () {
+                    _startResendTimer();
+                    // call your resend API here
+                  } : null,
+                  child: Text(
+                    _resendCountdown > 0
+                        ? 'Resend in ${_resendCountdown}s'
+                        : "Didn't receive a code? Resend",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ),
 
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
