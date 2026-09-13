@@ -1,6 +1,6 @@
 import "package:findmyot/models/device.dart";
+import "package:findmyot/models/location.dart";
 import "package:findmyot/providers/useapi_provider.dart";
-import "package:findmyot/services/api_service.dart";
 import "package:flutter/material.dart";
 import 'package:findmyot/models/result.dart';
 
@@ -41,5 +41,20 @@ class DevicesProvider extends UseapiProvider with ChangeNotifier{
     }
 
     return Result.success(null);
+  }
+
+  Future<void> fetchDevicesLocation() async {
+    Result result;
+    for (int i = 0; i < _devices.length; i++) {
+      Device device = _devices[i];
+      result = await apiService.fetchDeviceLocation(device.id);
+      if (!result.success){
+        continue;
+      }
+
+      device.location = Location.fromJson(result.data);
+    }
+
+    notifyListeners();
   }
 }

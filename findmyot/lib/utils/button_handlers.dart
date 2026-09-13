@@ -20,10 +20,6 @@ class UserHandlers {
       // await context.read<DevicesProvider>().fetchDevices();
       onSuccess();
     } else {
-      // showDialog(
-      //   context: context, 
-      //   builder: ((context) => ErrorDialog(message: res.error!))
-      // );
       onFailure(res.error!);
     }
   }

@@ -189,6 +189,20 @@ class ApiService {
     return Result.success(response.data);
   }
 
+  Future<Result> fetchDeviceLocation(int deviceId) async {
+    Response? response;
+
+    try {
+      response = await _http.get(
+        "/api/devices/$deviceId/location"
+      );
+    } on DioException catch (e) {
+      return _handleError(e.type, e.response);
+    }
+
+    return Result.success(response.data);
+  }
+
   Future<Result> validateAppleId() async {
     Response? response;
 

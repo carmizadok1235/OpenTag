@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:findmyot/models/device.dart';
 import 'package:findmyot/providers/devices_provider.dart';
 import 'package:findmyot/providers/useapi_provider.dart';
@@ -22,11 +24,35 @@ class DevicesScreen extends StatefulWidget {
 
 class _DevicesScreenState extends State<DevicesScreen> {
   final MapController _mapController = MapController();
+  Timer? _timer;
+  // bool 
 
-  // need to change it, devices should be fetched via provider using service call for the api.
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((d) {
+      if (!mounted) return;
+      context.read<DevicesProvider>().fetchDevicesLocation();
+    });
+    print("Starting timer");
+    _timer = Timer.periodic(const Duration(minutes: 5), (timer) {
+      context.read<DevicesProvider>().fetchDevicesLocation();
+    });
+  }
+
+  // Future<void> _fetchLocations() {
+
+  // }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final DevicesProvider devicesProvider = context.watch<DevicesProvider>();
     return Scaffold(
       body: Stack(
         children: [
@@ -41,17 +67,34 @@ class _DevicesScreenState extends State<DevicesScreen> {
                 urlTemplate: "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$MAP_API_KEY",
                 userAgentPackageName: "findmyot", 
               ),
+              MarkerLayer(
+                markers: devicesProvider.devices.map((device) {
+                  return Marker(
+                    point: LatLng(device.location!.latitude, device.location!.longitude),
+                    width: 40,
+                    height: 40,
+                    child: GestureDetector(
+                      onTap: () {
+                        
+                      },
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.blue,
+                        size: 40,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ],
           ),
-          _buildDraggableDeviceList()
+          _buildDraggableDeviceList(devicesProvider)
         ],
       )
     );
   }
 
-  Widget _buildDraggableDeviceList() {
-    final DevicesProvider _devicesProvider = context.watch<DevicesProvider>();
-    
+  Widget _buildDraggableDeviceList(DevicesProvider devicesProvider) {
     return DraggableScrollableSheet(
       initialChildSize: 0.15,
       minChildSize: 0.15,
@@ -108,9 +151,9 @@ class _DevicesScreenState extends State<DevicesScreen> {
                                     builder: (context) => AddDeviceDialog()
                                   );
 
-                                  Result res = await _devicesProvider.createDevice(device);
+                                  Result res = await devicesProvider.createDevice(device);
                                   if (res.success) {
-                                    await _devicesProvider.fetchDevices();
+                                    await devicesProvider.fetchDevices();
                                   } else {
                                     // showDialog(
                                     //   context: context,
@@ -135,17 +178,22 @@ class _DevicesScreenState extends State<DevicesScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final device = _devicesProvider.devices[index];
+                        final device = devicesProvider.devices[index];
                         return ListTile(
                           leading: const Icon(Icons.devices, color: Colors.blue),
                           title: Text(device.id.toString()),
                           subtitle: const Text("Tap to view on map"),
                           onTap: () { // when pressing a device
-                            // _mapController.move(device["position"], 14);
+                            if (device.location != null){
+                              _mapController.move(
+                                LatLng(device.location!.latitude, device.location!.longitude),
+                                14
+                              );
+                            }
                           },
                         );
                       },
-                      childCount: _devicesProvider.devices.length,
+                      childCount: devicesProvider.devices.length,
                     ),
                   ),
                 ],

@@ -1,14 +1,16 @@
-
+import 'package:findmyot/models/location.dart';
 
 class Device {
   final int id;
+  Location? location;
   final String timePaired;
 
-  const Device({required this.id, required this.timePaired});
+  Device({required this.id, required this.location, required this.timePaired});
 
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
       id: json["id"] as int,
+      location: null,
       timePaired: json["time_paired"] as String
     );
   }

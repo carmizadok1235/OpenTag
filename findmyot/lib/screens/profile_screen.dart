@@ -1,11 +1,8 @@
-import 'package:findmyot/models/user.dart';
 import 'package:findmyot/providers/auth_provider.dart';
 import 'package:findmyot/providers/devices_provider.dart';
-import 'package:findmyot/providers/useapi_provider.dart';
 import 'package:findmyot/utils/apple.dart';
 import 'package:findmyot/utils/button_handlers.dart';
 import 'package:findmyot/widgets/status_dialog.dart';
-import 'package:findmyot/widgets/two_factor_auth_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:findmyot/models/result.dart';
@@ -25,10 +22,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _obscureAppleIdPassword = true;
 
-  // Placeholder values — replace with real user data
-  // final String _username = "JohnDoe";
-  // final int _numOfDevices = 3;
-
   @override
   void initState() {
     super.initState();
@@ -41,16 +34,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _appleIdController.dispose();
     _appleIdPasswordController.dispose();
     super.dispose();
-  }
-
-  void _handleSave() {
-    final updatedProfile = {
-      "username": _usernameController.text.trim(),
-      "appleId": _appleIdController.text.trim(),
-      "appleIdPassword": _appleIdPasswordController.text,
-    };
-    // handle saving — e.g. call your backend here
-    print(updatedProfile);
   }
 
   Widget _buildField({

@@ -1,15 +1,11 @@
 import "package:findmyot/models/user.dart";
 import "package:findmyot/providers/auth_provider.dart";
-import "package:findmyot/providers/devices_provider.dart";
-import "package:findmyot/providers/useapi_provider.dart";
 import "package:findmyot/utils/button_handlers.dart";
-// import "package:findmyot/widgets/error_dialog.dart";
 import "package:findmyot/widgets/signup_dialog.dart";
 import "package:findmyot/widgets/status_dialog.dart";
 import "package:flutter/material.dart";
 import "package:findmyot/screens/main_screen.dart";
 import "package:provider/provider.dart";
-import 'package:findmyot/models/result.dart';
 
 
 class LoginScreen extends StatefulWidget {
