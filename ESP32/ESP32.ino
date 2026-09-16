@@ -18,8 +18,10 @@
     #define uECC_SUPPORTS_secp224r1 1
 #endif
 
-// #define BLE_PACKET_SIZE 37 
+#define ADVERTISE_DURATION (1UL * 60UL * 1000ULL) // milliseconds
+#define SLEEP_DURATION (5UL * 60UL * 1000000ULL) // microseconds(?)
 
+// #define BLE_PACKET_SIZE 37 
 #define ECC_PRIVATE_KEY_LEN 28
 #define ECC_PUBLIC_KEY_LEN ECC_PRIVATE_KEY_LEN*2
 #define SYMMETRIC_KEY_LEN 32
@@ -52,6 +54,10 @@
 #define OF_DATA_LENGTH_VAL '\x19'
 #define BATTERY_LEVEL_STATUS_VAL '\x10'
 #define HINT_VAL '\x00'
+
+RTC_DATA_ATTR uint8_t saved_root_private_k[ECC_PRIVATE_KEY_LEN];
+RTC_DATA_ATTR uint8_t saved_symmetric_k[SYMMETRIC_KEY_LEN];
+RTC_DATA_ATTR bool state_valid;
 
 uECC_Curve curve;
 uint8_t ecc_private_k[ECC_PRIVATE_KEY_LEN];
@@ -115,10 +121,12 @@ void dbg_print(String message){
   Serial.println();
 }
 
-void initMasterBeacon(){
+void initECCCurve(){
   curve = uECC_secp224r1();
   uECC_set_rng(&RNG);
+}
 
+void initMasterBeacon(){
   if (!uECC_make_key(ecc_public_k, ecc_private_k, curve)){
     dbg_print("Failed to generate private-public key pair.");
   }
@@ -204,7 +212,7 @@ void initBigNumbers(){
   mbedtls_mpi_init(&one);
 
 
-  mbedtls_mpi_read_binary(&d0, ecc_private_k, 28);
+  mbedtls_mpi_read_binary(&d0, saved_root_private_k, 28);
   mbedtls_mpi_read_binary(&n, p224_n, 28);
   
   mbedtls_mpi_lset(&one, 1);
@@ -298,6 +306,8 @@ void rollKeys(){ // https://arxiv.org/pdf/2103.02282 6.1 Cryptography
 
 void advertise(){
   rollKeys();
+  Serial.print("Base64 Repr of symmetric key: ");
+  printBase64Repr(symmetric_k, SYMMETRIC_KEY_LEN);
   Serial.print("Base64 Repr of private key: ");
   printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
   if (!setPublicKey(ecc_public_k, ECC_PUBLIC_KEY_LEN/2)){ // taking only the X-coordinate of the public key
@@ -319,18 +329,32 @@ void advertise(){
 }
 
 void setup() {
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+  bool waking_from_sleep = (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER);
+
   Serial.begin(115200);
-  delay(5000);
-  // dbg_print("Testing ECC");
-  
-  dbg_print("Initializing MasterBeaconKey");
-  initMasterBeacon();
-  // printBytesRepr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
-  Serial.print("sk0: ");
-  printBase64Repr(symmetric_k, SYMMETRIC_KEY_LEN);
-  Serial.print("\nd0: ");
-  printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
-  Serial.println();
+  if (!waking_from_sleep){
+    delay(5000);
+  }
+
+  Serial.println("Setup");
+  initECCCurve();
+  if (!waking_from_sleep || !state_valid) {
+    dbg_print("Initializing MasterBeaconKey");
+    initMasterBeacon();
+    Serial.print("sk0: ");
+    printBase64Repr(symmetric_k, SYMMETRIC_KEY_LEN);
+    Serial.print("\nd0: ");
+    printBase64Repr(ecc_private_k, ECC_PRIVATE_KEY_LEN);
+    Serial.println();
+
+    memcpy(saved_root_private_k, ecc_private_k, ECC_PRIVATE_KEY_LEN);
+    memcpy(saved_symmetric_k, symmetric_k, SYMMETRIC_KEY_LEN);
+    state_valid = true;
+  } else {
+    dbg_print("Waking from sleep, restoring rolled state");
+    memcpy(symmetric_k, saved_symmetric_k, SYMMETRIC_KEY_LEN);
+  }
 
   initAppleBLEPacket();
 
@@ -342,17 +366,24 @@ void setup() {
 
   dbg_print("Initializing BLE Adverisment.");
   pAdvertising = NimBLEDevice::getAdvertising();
+  pAdvertising->setMinInterval(16000);
+  pAdvertising->setMaxInterval(16000);
   
   advData = new NimBLEAdvertisementData();
 }
 
 void loop() {
   advertise();
+  memcpy(saved_symmetric_k, symmetric_k, SYMMETRIC_KEY_LEN);
+
   dbg_print("Started Advertising.");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
-  delay(15UL * 60UL * 1000UL); // 15 minutes
-  // delay(10000);
+  // delay(15UL * 60UL * 1000UL); // 15 minutes
+  delay(ADVERTISE_DURATION); // advertising 
   pAdvertising->stop();
   dbg_print("Stopped Advertising");
   Serial.print("---------------------------------------------------------------------------------------------------------\n");
+
+  esp_sleep_enable_timer_wakeup(SLEEP_DURATION);
+  esp_deep_sleep_start();
 }
