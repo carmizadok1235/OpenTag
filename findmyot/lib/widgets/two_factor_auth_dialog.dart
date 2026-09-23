@@ -204,7 +204,7 @@ class _TwoFactorDialogState extends State<TwoFactorDialog> {
                 TextButton(
                   onPressed: _resendCountdown == 0 ? () {
                     _startResendTimer();
-                    // call your resend API here
+                    _verify();
                   } : null,
                   child: Text(
                     _resendCountdown > 0

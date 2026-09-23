@@ -156,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    UserHandlers.onUpdate(
+                    await UserHandlers.onUpdate(
                       authProvider: authProvider,
                       username: _usernameController.text.trim(), 
                       appleId: _appleIdController.text.trim(), 
@@ -197,9 +197,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    Result<AppleLoginState> res = await authProvider.validateAppleCredentials();
-                    // print(res.data);
-                    checkAppleLoginState(context, res);
+                    await UserHandlers.onValidateAppleAccount(
+                      authProvider: authProvider, 
+                      context: context
+                    );
+                    // Result<AppleLoginState> res = await authProvider.validateAppleCredentials();
+                    // // print(res.data);
+                    // checkAppleLoginState(context, res);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,

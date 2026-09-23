@@ -100,8 +100,8 @@ Column buildBody(BuildContext context) {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              UserHandlers.onLogin(
+            onPressed: () async {
+              await UserHandlers.onLogin(
                 authProvider: context.read<AuthProvider>(),
                 username: usernameController.text,
                 password: passwordController.text,
@@ -145,7 +145,7 @@ Column buildBody(BuildContext context) {
             );
             
             if (newUser != null){
-              UserHandlers.onSignup(
+              await UserHandlers.onSignup(
                 authProvider: context.read<AuthProvider>(), 
                 newUser: newUser,
                 onSuccess: () => showStatusDialog(

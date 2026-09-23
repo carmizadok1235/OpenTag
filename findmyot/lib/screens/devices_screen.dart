@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:findmyot/models/device.dart';
+import 'package:findmyot/providers/auth_provider.dart';
 import 'package:findmyot/providers/devices_provider.dart';
 import 'package:findmyot/providers/useapi_provider.dart';
+import 'package:findmyot/utils/button_handlers.dart';
 import 'package:findmyot/widgets/add_device_dialog.dart';
 // import 'package:findmyot/widgets/error_dialog.dart';
 import 'package:findmyot/widgets/status_dialog.dart';
@@ -32,17 +34,22 @@ class _DevicesScreenState extends State<DevicesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((d) {
       if (!mounted) return;
-      context.read<DevicesProvider>().fetchDevicesLocation();
+      _devicesSetup(context);
     });
-    print("Starting timer");
+    // print("Starting timer");
     _timer = Timer.periodic(const Duration(minutes: 5), (timer) {
       context.read<DevicesProvider>().fetchDevicesLocation();
     });
   }
 
-  // Future<void> _fetchLocations() {
-
-  // }
+  Future<void> _devicesSetup(BuildContext context) async {
+    await UserHandlers.onValidateAppleAccount(
+      authProvider: context.read<AuthProvider>(), 
+      context: context
+    );
+    await context.read<DevicesProvider>().fetchDevices();
+    await context.read<DevicesProvider>().fetchDevicesLocation();
+  }
 
   @override
   void dispose() {
@@ -152,21 +159,15 @@ class _DevicesScreenState extends State<DevicesScreen> {
                                     builder: (context) => AddDeviceDialog()
                                   );
 
-                                  Result res = await devicesProvider.createDevice(device);
-                                  if (res.success) {
-                                    await devicesProvider.fetchDevices();
-                                  } else {
-                                    // showDialog(
-                                    //   context: context,
-                                    //   builder: (context) => ErrorDialog(message: res.error!)
-                                    // );
-                                    showStatusDialog(
+                                  await DeviceHandlers.onAddDevice(
+                                    devicesProvider: devicesProvider,
+                                    device: device, 
+                                    onFailure: (String msg) => showStatusDialog(
                                       context, 
                                       status: DialogStatus.error, 
-                                      message: res.error!
-                                    );
-                                  }
-                                  // handle add device
+                                      message: msg
+                                    )
+                                  );
                                 },
                               ),
                             ],

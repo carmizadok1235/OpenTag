@@ -70,8 +70,8 @@ class ApiService {
   } 
 
   Future<Result> loginForToken(String username, String password) async {
-    String url = _http.options.baseUrl;
-    print("attempting login with $username and $password at $url");
+    // String url = _http.options.baseUrl;
+    // print("attempting login with $username and $password at $url");
     // do form data not json data
     FormData formData = FormData.fromMap({
       "grant_type": "password" ,

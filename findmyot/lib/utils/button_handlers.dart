@@ -1,6 +1,10 @@
+import 'package:findmyot/models/device.dart';
 import 'package:findmyot/providers/auth_provider.dart';
 import "package:findmyot/models/user.dart";
 import 'package:findmyot/models/result.dart';
+import 'package:findmyot/providers/devices_provider.dart';
+import 'package:findmyot/utils/apple.dart';
+import 'package:flutter/material.dart';
 
 class UserHandlers {
   static Future<void> onLogin({
@@ -57,6 +61,35 @@ class UserHandlers {
     if (res.success) {
       onSuccess();
       await authProvider.refreshUser();
+    } else {
+      onFailure(res.error!);
+    }
+  }
+
+  static Future<void> onValidateAppleAccount({
+    required AuthProvider authProvider,
+    required BuildContext context
+  }) async {
+    Result<AppleLoginState> res = await authProvider.validateAppleCredentials();
+    // print(res.data);
+    checkAppleLoginState(context, res);
+  }
+}
+
+class DeviceHandlers {
+  static Future<void> onAddDevice({
+    required DevicesProvider devicesProvider,
+    required DeviceCreate? device,
+    required Function(String) onFailure
+  }) async {
+    if (device == null) {
+      return;
+    }
+
+    Result res = await devicesProvider.createDevice(device);
+
+    if (res.success) {
+      await devicesProvider.fetchDevices();
     } else {
       onFailure(res.error!);
     }
