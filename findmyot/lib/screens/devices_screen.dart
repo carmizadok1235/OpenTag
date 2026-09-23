@@ -68,7 +68,8 @@ class _DevicesScreenState extends State<DevicesScreen> {
                 userAgentPackageName: "findmyot", 
               ),
               MarkerLayer(
-                markers: devicesProvider.devices.map((device) {
+                markers: devicesProvider.devices
+                .where((device) => device.location != null).map((device) {
                   return Marker(
                     point: LatLng(device.location!.latitude, device.location!.longitude),
                     width: 40,
