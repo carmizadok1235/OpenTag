@@ -1,0 +1,36 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# dotenv
+.env
+
+# database
+*.db
+
+# accounts
+accounts/*
+
+# vscode counter
+.VSCodeCounter
+
+# log
+*.log
+
+# git
+.git
+.gitignore
+
+# docker
+Dockerfile
+.dockerignore
+
+# misc
+README.md
