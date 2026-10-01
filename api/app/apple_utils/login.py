@@ -80,7 +80,7 @@ async def get_account_async(
         ani = (
             RemoteAnisetteProvider(settings.anisette_server)
             if settings.anisette_server is not None and _remote_anisette_is_live(settings.anisette_server)
-            else LocalAnisetteProvider(settings.anisette_server)
+            else LocalAnisetteProvider(settings.anisette_libs_path)
         )
         acc = AsyncAppleAccount(ani)
         # await _login_async(acc, user)
