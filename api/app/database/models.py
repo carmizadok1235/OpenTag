@@ -32,6 +32,7 @@ class Device(Base):
     __tablename__ = "devices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     symmetric_key: Mapped[str] = mapped_column(String(200), nullable=False)
     private_key: Mapped[str] = mapped_column(String(200), nullable=False)
