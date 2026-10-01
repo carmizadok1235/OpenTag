@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     token_type: str = "bearer"
     account_store_path: DirectoryPath = "./accounts"
-    anisette_server: str = None # None or container's name
+    anisette_server: str | None = None # None or container's name
     anisette_libs_path: str = "ani_libs.bin" # change
 
     @field_validator("account_store_path", mode="before")
