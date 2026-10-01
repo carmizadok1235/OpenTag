@@ -23,3 +23,6 @@ accounts/*
 
 # log
 *.log
+
+# .bin
+*.bin

@@ -1,4 +1,4 @@
-
+import requests
 
 from findmy import (
     AsyncAppleAccount,
@@ -14,6 +14,16 @@ from app.database.models import User
 from app.exceptions import NoSmsTwoFactorMethodAuthException
 
 from app.config import settings
+
+def _remote_anisette_is_live(url: str, timeout: float = 5) -> bool:
+    try:
+        if requests.get(url, timeout=timeout).status_code != 200:
+            return False
+    except:
+        return False
+
+    return True
+
 
 def logged_in(user: User, account: AsyncAppleAccount):
     account.to_json(
@@ -68,9 +78,9 @@ async def get_account_async(
         )
     except FileNotFoundError:
         ani = (
-            LocalAnisetteProvider(libs_path=settings.anisette_libs_path)
-            if settings.anisette_sever is None
-            else RemoteAnisetteProvider(settings.anisette_sever)
+            RemoteAnisetteProvider(settings.anisette_server)
+            if settings.anisette_server is not None and _remote_anisette_is_live(settings.anisette_server)
+            else LocalAnisetteProvider(settings.anisette_server)
         )
         acc = AsyncAppleAccount(ani)
         # await _login_async(acc, user)
