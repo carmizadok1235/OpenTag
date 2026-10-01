@@ -1,8 +1,6 @@
-import 'package:findmyot/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:findmyot/models/result.dart';
 
 
 class TwoFactorDialog extends StatefulWidget {

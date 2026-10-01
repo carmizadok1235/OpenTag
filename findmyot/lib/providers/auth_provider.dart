@@ -1,6 +1,5 @@
 import "package:findmyot/providers/useapi_provider.dart";
 import "package:findmyot/models/user.dart";
-import "package:findmyot/services/api_service.dart";
 import "package:findmyot/utils/apple.dart";
 import "package:flutter/material.dart";
 import 'package:findmyot/models/result.dart';
@@ -13,7 +12,6 @@ enum AppleLoginState {
 
 class AuthProvider extends UseapiProvider with ChangeNotifier {
   User? _user;
-  String? _authToken;
   bool _appleAccountVerified = false;
 
   AuthProvider({required super.apiService});
@@ -45,7 +43,6 @@ class AuthProvider extends UseapiProvider with ChangeNotifier {
       // print(result.error);
       return Result.failure(error: result.error);
     }
-    _authToken = result.data["access_token"];
     
     result = await apiService.getCurrentUser();
     if (!result.success) {

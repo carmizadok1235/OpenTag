@@ -1,18 +1,14 @@
 import 'dart:async';
-
 import 'package:findmyot/models/device.dart';
 import 'package:findmyot/providers/auth_provider.dart';
 import 'package:findmyot/providers/devices_provider.dart';
-import 'package:findmyot/providers/useapi_provider.dart';
 import 'package:findmyot/utils/button_handlers.dart';
 import 'package:findmyot/widgets/add_device_dialog.dart';
-// import 'package:findmyot/widgets/error_dialog.dart';
 import 'package:findmyot/widgets/status_dialog.dart';
 import "package:flutter/material.dart";
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:findmyot/models/result.dart';
 
 
 const String MAP_API_KEY = String.fromEnvironment("MAP_API_KEY");
