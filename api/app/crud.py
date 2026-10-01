@@ -92,6 +92,7 @@ async def create_devcie(device_data: DeviceCreate, curr_user_id: int, db: AsyncS
 
     new_device = Device(
         user_id=curr_user_id,
+        name=device_data.name,
         symmetric_key=device_data.symmetric_key,
         private_key=device_data.private_key
     )

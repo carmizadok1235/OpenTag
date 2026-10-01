@@ -31,7 +31,7 @@ class UserPrivateResponse(BaseModel):
     json_account_path: FilePath | None
 
 class DeviceBase(BaseModel): 
-    pass
+    name: str = Field(min_length=1, max_length=50)
 
 class DeviceCreate(DeviceBase):
     symmetric_key: str
