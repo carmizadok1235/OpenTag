@@ -9,6 +9,7 @@ class AddDeviceDialog extends StatefulWidget {
 }
 
 class _AddDeviceDialogState extends State<AddDeviceDialog> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _symmetricKeyController = TextEditingController();
   final TextEditingController _privateKeyController = TextEditingController();
   final TextEditingController _timeCreatedController = TextEditingController();
@@ -24,6 +25,7 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _symmetricKeyController.dispose();
     _privateKeyController.dispose();
     _timeCreatedController.dispose();
@@ -32,13 +34,14 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
 
   void _handleAddDevice() {
     if (_symmetricKeyController.text.trim().isEmpty 
-    || _privateKeyController.text.trim().isEmpty) {
+    || _privateKeyController.text.trim().isEmpty || _nameController.text.trim().isEmpty) {
       setState(() {
-        _errorText = "Keys cannot be empty";
+        _errorText = "Fields cannot be empty";
       });
       return;
     }
     final DeviceCreate newDevice = DeviceCreate(
+      name: _nameController.text.trim(),
       symmetricKey: _symmetricKeyController.text.trim(),
       privateKey:  _privateKeyController.text.trim(),
       timePaired: _timeCreatedController.text.trim()
@@ -60,6 +63,16 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: "Name",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
             TextField(
               controller: _symmetricKeyController,
               decoration: InputDecoration(

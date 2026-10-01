@@ -177,6 +177,7 @@ class ApiService {
       response = await _http.post(
         "/api/devices",
         data: {
+          "name": device.name,
           "symmetric_key": device.symmetricKey,
           "private_key": device.privateKey,
           "time_paired": device.timePaired

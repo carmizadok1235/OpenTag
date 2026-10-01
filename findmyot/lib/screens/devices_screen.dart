@@ -179,7 +179,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                         final device = devicesProvider.devices[index];
                         return ListTile(
                           leading: const Icon(Icons.devices, color: Colors.blue),
-                          title: Text(device.id.toString()),
+                          title: Text(device.name),
                           subtitle: const Text("Tap to view on map"),
                           onTap: () { // when pressing a device
                             if (device.location != null){
