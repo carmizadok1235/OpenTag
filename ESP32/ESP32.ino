@@ -19,8 +19,11 @@
     #define uECC_SUPPORTS_secp224r1 1
 #endif
 
-#define ADVERTISE_DURATION (1UL * 60UL * 1000ULL) // milliseconds
-#define SLEEP_DURATION (5UL * 60UL * 1000000ULL) // microseconds(?)
+#define ADVERTISE_DURATION (10UL * 60UL * 1000ULL) // milliseconds 10 minutes
+#define SLEEP_DURATION (1UL * 60UL * 1000000ULL) // microseconds(?) 1 minute
+
+#define MIN_INTERVAL 3200 // 2000ms (2000ms / 0.625ms)
+#define MAX_INTERVAL 3200 // 2000ms (2000ms / 0.625ms)
 
 // #define BLE_PACKET_SIZE 37 
 #define ECC_PRIVATE_KEY_LEN 28
@@ -377,8 +380,8 @@ void setup() {
 
   dbg_print("Initializing BLE Adverisment.");
   pAdvertising = NimBLEDevice::getAdvertising();
-  pAdvertising->setMinInterval(16000);
-  pAdvertising->setMaxInterval(16000);
+  pAdvertising->setMinInterval(MIN_INTERVAL);
+  pAdvertising->setMaxInterval(MAX_INTERVAL);
   
   advData = new NimBLEAdvertisementData();
 }
