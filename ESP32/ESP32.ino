@@ -10,6 +10,7 @@
 #include <mbedtls/base64.h>
 #include <mbedtls/sha256.h>
 #include <mbedtls/bignum.h>
+#include "keys_config.h"
 // #include <esp_gap_ble_api.h>
 // #include <esp_mac.h>
 
@@ -60,9 +61,14 @@ RTC_DATA_ATTR uint8_t saved_symmetric_k[SYMMETRIC_KEY_LEN];
 RTC_DATA_ATTR bool state_valid;
 
 uECC_Curve curve;
-uint8_t ecc_private_k[ECC_PRIVATE_KEY_LEN];
 uint8_t ecc_public_k[ECC_PUBLIC_KEY_LEN];
+#if KEYS_DEFINED
+uint8_t ecc_private_k[ECC_PRIVATE_KEY_LEN] = PRIVATE_KEY;
+uint8_t symmetric_k[SYMMETRIC_KEY_LEN] = SYMMETRIC_KEY;
+#else
+uint8_t ecc_private_k[ECC_PRIVATE_KEY_LEN];
 uint8_t symmetric_k[SYMMETRIC_KEY_LEN];
+#endif
 
 uint8_t packet_data[APPLE_BLE_PACKET_LENGTH];
 uint8_t macAddress[MAC_ADDRESS_SIZE];
@@ -127,6 +133,11 @@ void initECCCurve(){
 }
 
 void initMasterBeacon(){
+  if (KEYS_DEFINED) {
+    uECC_compute_public_key(ecc_private_k, ecc_public_k, curve);
+    return;
+  }
+
   if (!uECC_make_key(ecc_public_k, ecc_private_k, curve)){
     dbg_print("Failed to generate private-public key pair.");
   }
